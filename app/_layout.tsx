@@ -1,25 +1,35 @@
+import { AuthProvider } from '@/src/context/AuthContext';
 import { Stack } from 'expo-router';
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from 'react';
-import { SessionProvider } from './auth/ctx';
+import { StatusBar } from 'react-native';
 
-export default function RootLayout() {
+
+const RootLayoutNav = () => {
   useEffect(() => {
-    async function hideSplashScreen() {
-      await SplashScreen.preventAutoHideAsync(); // Ensure it's prevented first
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate loading
-      await SplashScreen.hideAsync(); // Hide it
+    const hideSplashScreen = async () => {
+      await SplashScreen.hideAsync();
     }
     hideSplashScreen();
-  }, []);
-  return (
-    <SessionProvider>
+  },[])
+    return (
+      <>
       <Stack>
         <Stack.Screen name="sign-in" options={{ headerShown: false }} />
         <Stack.Screen name="onboarding" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
-    </SessionProvider>
+    </>
+    );
+  }
+
+export default function RootLayout() {
+  StatusBar.setTranslucent(true);
+  StatusBar.setBackgroundColor('transparent');
+  return (
+    <AuthProvider>
+        <RootLayoutNav />
+    </AuthProvider>
   );
 }

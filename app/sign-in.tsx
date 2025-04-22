@@ -1,5 +1,4 @@
 import { router } from 'expo-router';
-import { useSession } from './auth/ctx';
 import {
   Image,
   StyleSheet,
@@ -15,23 +14,39 @@ import { fonts } from "@/assets/onboarding/font";
 import { useNavigation } from "@react-navigation/native";
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuth } from "@/src/context/AuthContext";
 
 const LoginScreen = () => {
   const navigation = useNavigation();
   const [secureEntery, setSecureEntery] = useState(true);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const authContext = useAuth();
+  const onLogin = authContext?.onLogin;
 
   const handleGoBack = () => {
     navigation.goBack();
   };
   const handleSignup = () => {
-    navigation.navigate("sign-up");
   };
   const insets = useSafeAreaInsets();
-  const {signIn} = useSession();
+
   const handleSignin = () => {
-    signIn();
-    navigation.navigate("(tabs)");
+    const res = signIn();
+    router.push('/(tabs)');
   };
+
+  const signIn = async () => {
+    if (onLogin) {
+      const response = await onLogin(email, password);  
+      if (response.error) {
+        alert(response.msg);
+      }
+      else return response
+    } else {
+      console.error("onLogin function error");
+    }
+  }
 
   return (
     <View style={{
@@ -39,13 +54,6 @@ const LoginScreen = () => {
       paddingTop: insets.top,
 
     }}>
-      <TouchableOpacity style={styles.backButtonWrapper} onPress={handleGoBack}>
-        <Feather
-          name={"arrow-left"}
-          color={colors.primary}
-          size={25}
-        />
-      </TouchableOpacity>
       <View style={styles.textContainer}>
         <Text style={styles.headingText}>Chào</Text>
         <Text style={styles.headingText}>Mừng</Text>

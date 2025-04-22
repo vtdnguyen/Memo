@@ -15,6 +15,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import {useNavigation} from '@react-navigation/native';
 import {OnboardingData} from '@/components/onboarding/data';
+import { useAuth } from '@/src/context/AuthContext';
+import { router } from 'expo-router';
 
 type Props = {
   dataLength: number;
@@ -27,6 +29,9 @@ const CustomButton = ({flatListRef, flatListIndex, dataLength, x}: Props) => {
   const {width: SCREEN_WIDTH} = useWindowDimensions();
   const navigation = useNavigation();
 
+   const authContext = useAuth();
+    const completeOnboarding = authContext?.completeOnboarding;
+    
   const buttonAnimationStyle = useAnimatedStyle(() => {
     return {
       width:
@@ -86,7 +91,8 @@ const CustomButton = ({flatListRef, flatListIndex, dataLength, x}: Props) => {
         if (flatListIndex.value < dataLength - 1) {
           flatListRef.current?.scrollToIndex({index: flatListIndex.value + 1});
         } else {
-          navigation.navigate('sign-in');
+          completeOnboarding?.();
+          router.push('/sign-in');
         }
       }}>
       <Animated.View

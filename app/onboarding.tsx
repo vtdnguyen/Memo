@@ -5,11 +5,11 @@ import Animated, {
   useAnimatedScrollHandler,
   useAnimatedRef,
 } from 'react-native-reanimated';
-import data, {OnboardingData} from '@/components/onboarding/data';
-import Pagination from '@/components/onboarding/Pagination';
-import CustomButton from '@/components/onboarding/CustomButton';
+import data, {OnboardingData} from '@/src/components/onboarding/data';
+import Pagination from '@/src/components/onboarding/Pagination';
+import CustomButton from '@/src/components/onboarding/CustomButton';
 import { SharedValue } from 'react-native-reanimated';
-import RenderItem from '@/components/onboarding/RenderItem';
+import RenderItem from '@/src/components/onboarding/RenderItem';
 
 const OnboardingScreen = () => {
   const flatListRef = useAnimatedRef<FlatList<OnboardingData>>();

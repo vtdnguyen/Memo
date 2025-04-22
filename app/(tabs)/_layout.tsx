@@ -1,36 +1,38 @@
 import { Redirect, Tabs } from 'expo-router';
 import { View, StatusBar, Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import {TabBar} from '@/components/ui/TabBar'
-import { useSession } from '../auth/ctx';
+import {TabBar} from '@/src/components/TabBar/TabBar'
+import { useAuth } from '@/src/context/AuthContext';
+import { createContext } from 'react';
+export const TabBarContext = createContext({
+  showTabBar: () => {},
+  hideTabBar: () => {},
+});
 
 export default function TabLayout() {
-  StatusBar.setTranslucent(true);
-  StatusBar.setBackgroundColor('transparent');
-  const { session, isLoading } = useSession();
+  const authContext = useAuth();
+  const authState = authContext?.authState;
+  const isFirstTimeUser = authContext?.isFirstTimeUser;
+  const loading = authContext?.loading;
 
-  // You can keep the splash screen open, or render a loading screen like we do here.
-  if (isLoading) {
-    return <Text>Loading...</Text>;
+  if (loading){
+    return <Text style={{fontSize: 100}}>Loading...</Text>;
   }
+     if (!authState?.authenticated) {
+      if (isFirstTimeUser) {
+        return <Redirect href={'/onboarding'} />;
+      } else {
+        return <Redirect href={'/sign-in'} />;
+      }
+    }
 
-  // Only require authentication within the (app) group's layout as users
-  // need to be able to access the (auth) group and sign in again.
-  if (!session) {
-    // On web, static rendering will stop here as the user is not authenticated
-    // in the headless Node process that the pages are rendered in.
-    return <Redirect href="/onboarding" />;
-  }
   return (
-    
-    <SafeAreaProvider>
       <View style={{ flex: 1}}>
         <Tabs tabBar={(props) => <TabBar {...props} />} >
           <Tabs.Screen name="explore" options={{title: 'Explore' , headerShown: false}} />
           <Tabs.Screen name="index" options={{title: 'Bket', headerShown: false}} />
-          <Tabs.Screen name="friend" options={{title: 'Friend' , headerShown: false}} />
+          <Tabs.Screen name="profile" options={{title: 'Profile' , headerShown: false}} />
         </Tabs>
       </View>
-    </SafeAreaProvider>
   );
 }

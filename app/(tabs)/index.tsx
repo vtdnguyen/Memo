@@ -11,6 +11,7 @@ import { AntDesign } from "@expo/vector-icons";
 import { Feather } from "@expo/vector-icons";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { colors } from "@/constants/Colors";
 
 export default function App() {
   
@@ -34,10 +35,9 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f6fbff",
+    backgroundColor: colors.background,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 30,
   },
   camera: {
     flex: 1,
