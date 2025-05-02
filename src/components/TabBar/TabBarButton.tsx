@@ -61,7 +61,7 @@ const TabBarButton: React.FC<TabBarButtonProps> = (props) => {
     } else {
       // Fallback icon when the routeName doesn't exist in the icons object
       console.warn(`No icon found for route: ${routeName}`);
-      return <AntDesign name="question" size={26} color={color} />;
+      return <AntDesign name="question" size={30} color={color} />;
     }
   };
 

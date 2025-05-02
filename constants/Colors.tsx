@@ -20,6 +20,8 @@ export const colors =
     green: '#4CD964',
     yellow: '#FFCC00',
     background: '#272727',
+    outline: '#C8A673',
+    textCol: 'rgba(255, 255, 255, 0.7)'
   }
 
 

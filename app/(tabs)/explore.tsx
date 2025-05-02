@@ -1,62 +1,329 @@
-import { StyleSheet, Text, View, Dimensions, Button } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { NavigationProp } from '@react-navigation/native';
-import { colors } from "@/constants/Colors";
-type ExploreProps = {
-  navigation: NavigationProp<any>;
-};
+import React, { useState, useRef, useContext } from 'react';
+import {
+  StyleSheet,
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  Dimensions,
+  FlatList,
+  ViewToken
+} from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colors } from '@/constants/Colors';
+import CustomButton from '@/src/components/home/IconButton';
+import { TabBarContext } from './_layout';
+import { router } from 'expo-router';
 
-export default function Explore({ navigation }: ExploreProps) {
- 
+// Mock data for posts
+const POSTS = [
+  {
+    id: '1',
+    imageUrl: 'https://picsum.photos/id/1/400/600',
+    user: {
+      name: 'Sarah Johnson',
+      avatar: 'https://randomuser.me/api/portraits/women/44.jpg',
+    },
+    timePosted: '5m ago',
+    hashtag:'#2025'
+  },
+  {
+    id: '2',
+    imageUrl: 'https://picsum.photos/id/20/400/600',
+    user: {
+      name: 'Mike Chen',
+      avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
+    },
+    timePosted: '20m ago',
+  },
+  {
+    id: '3',
+    imageUrl: 'https://picsum.photos/id/37/400/600',
+    user: {
+      name: 'Aisha Patel',
+      avatar: 'https://randomuser.me/api/portraits/women/66.jpg',
+    },
+    timePosted: '1h ago',
+  },
+  {
+    id: '4',
+    imageUrl: 'https://picsum.photos/id/42/400/600',
+    user: {
+      name: 'Carlos Rodriguez',
+      avatar: 'https://randomuser.me/api/portraits/men/54.jpg',
+    },
+    timePosted: '2h ago',
+  },
+];
+
+// Types
+interface Post {
+  id: string;
+  imageUrl: string;
+  user: {
+    name: string;
+    avatar: string;
+  };
+  timePosted: string;
+  hashtag?:string;
+}
+
+interface ViewableItemsChanged {
+  viewableItems: Array<ViewToken>;
+  changed: Array<ViewToken>;
+}
+
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+
+export default function ExploreScreen(): React.JSX.Element {
+  const { hideTabBar, showTabBar } = useContext(TabBarContext);
+  
+  const [unreadMessages, setUnreadMessages] = useState<number>(3);
+  const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const flatListRef = useRef<FlatList>(null);
   const insets = useSafeAreaInsets();
-  const SCREEN_HEIGHT = Dimensions.get('window').height;
-  const SCREEN_WIDTH = Dimensions.get('window').width;
 
-  return (
-    <View style={[styles.container, {
-      paddingTop: insets.top + (SCREEN_HEIGHT * 1/70),
-      paddingBottom: insets.bottom + (SCREEN_HEIGHT * 1/5),
-      paddingLeft: insets.left + (SCREEN_WIDTH * 1/20),
-      paddingRight: insets.right + (SCREEN_WIDTH * 1/20),
-    }]}>
+  // Calculate the square image size (70% of screen width, maintaining 1:1 ratio)
+  const imageSize = screenWidth * 1;
+  
+  // Calculate the total item height to ensure proper snapping
+  // Each item takes the full screen height
+  const itemHeight = (screenHeight - insets.top - insets.bottom);
+
+  const onViewableItemsChanged = ({ viewableItems }: ViewableItemsChanged) => {
+    if (viewableItems.length > 0) {
+      setCurrentIndex(viewableItems[0].index || 0);
+    }
+  };
+
+  const viewabilityConfig = {
+    itemVisiblePercentThreshold: 50
+  };
+
+  const viewabilityConfigCallbackPairs = useRef([
+    { viewabilityConfig, onViewableItemsChanged }
+  ]);
+
+  const openMessage = () => {
+    hideTabBar();
+    router.push('/(tabs)/(message)');
+  }
+
+  const renderPost = ({ item }: { item: Post }) => (
+    <View style={[styles.postContainer, { height: itemHeight, paddingTop: itemHeight/4}]}>
+      <View style={[styles.imageContainer, { width: imageSize, height: imageSize }]}>
+        <Image source={{ uri: item.imageUrl }} style={styles.postImage} />
+        <View style={styles.userInfoContainer}>
+          <Image source={{ uri: item.user.avatar }} style={styles.avatar} />
+          <View style={styles.userTextInfo}>
+            <Text style={styles.userName}>{item.user.name}</Text>
+            <Text style={styles.timePosted}>{item.timePosted}</Text>
+          </View>
+        </View>
+      </View>
+      {item.hashtag && (<Text style={styles.title}>{item.hashtag}</Text>)}
     </View>
   );
-};
+
+  return (
+    <View style={[styles.container, ]}>
+      <StatusBar style="light" />
+      
+      {/* Main Content - Post Scroller */}
+      <FlatList
+        ref={flatListRef}
+        data={POSTS}
+        renderItem={renderPost}
+        keyExtractor={(item) => item.id}
+        pagingEnabled={true}
+        showsVerticalScrollIndicator={false}
+        snapToInterval={itemHeight}
+        snapToAlignment="start"
+        decelerationRate="fast"
+        viewabilityConfigCallbackPairs={viewabilityConfigCallbackPairs.current}
+        style={styles.scrollView}
+        contentContainerStyle={{ paddingBottom: insets.bottom }}
+        getItemLayout={(data, index) => ({
+          length: itemHeight,
+          offset: itemHeight * index,
+          index,
+        })}
+      />
+
+      {/* Header */}
+      <View style={styles.headerLeft}>
+        <CustomButton
+          text = {"Friends"}
+            textColor={'#dfdfdf'}
+            textStyle={{ fontSize: 16 }}
+            iconName='user-friends'
+            iconType='FontAwesome5'
+            iconSize={20}
+            iconColor= {'#dfdfdf'}
+            iconPosition="left"
+            backgroundColor={'rgba(255, 255, 255, 0.1)'}
+            borderRadius={30}
+            onPress={() => {}}
+            style={{ marginRight: 10, height:50 }}
+        />
+      </View>
+
+      <View style={styles.headerRight}>
+      <TouchableOpacity style={styles.messageButton} onPress={openMessage}>
+          <Ionicons name="chatbubble-outline" size={26} color="#dfdfdf" />
+          {unreadMessages > 0 && (
+            <View style={styles.badgeContainer}>
+              <Text style={styles.badgeText}>
+                {unreadMessages > 9 ? '9+' : unreadMessages}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      </View>
+      
+      {/* Bottom Message Input */}
+      <View style={[styles.messageInputContainer, { paddingBottom: insets.bottom+70 }]}>
+        <TouchableOpacity style={styles.messageInputButton}>
+          <Text style={styles.messageInputPlaceholder}>Send a message...</Text>
+          <View style={styles.reactionContainer}>
+            <MaterialIcons name="favorite" size={20} color="#FF4D67" style={styles.reactionIcon} />
+            <MaterialIcons name="local-fire-department" size={20} color="#FF8A00" style={styles.reactionIcon} />
+            <MaterialIcons name="emoji-emotions" size={20} color="#FFD600" style={styles.reactionIcon} />
+          </View>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    alignItems: "center",
-    justifyContent: "center",
   },
-  camera: {
+  
+  headerLeft: {
+    position: 'absolute',
+    top:70,
+    paddingHorizontal: 16,
+  },
+  headerRight:{
+    position: 'absolute',
+    top:70,
+    right:0,
+    paddingHorizontal: 16,
+  },
+  friendButton: {
+    padding: 8,
+  },
+  friendButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  messageButton: {
+    width: 50,
+    height:50,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgeContainer: {
+    position: 'absolute',
+    right: -2,
+    top: -2,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#FF4D67',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  scrollView: {
     flex: 1,
-    width: "100%",
   },
-  shutterContainer: {
-    position: "absolute",
-    bottom: 44,
-    left: 0,
-    width: "100%",
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 30,
+  postContainer: {
+    alignItems: 'center',
   },
-  shutterBtn: {
-    backgroundColor: "transparent",
-    borderWidth: 5,
-    borderColor: "white",
-    width: 85,
-    height: 85,
-    borderRadius: 45,
-    alignItems: "center",
-    justifyContent: "center",
+  title: {
+    fontSize: 16,
+    color: '#dfdfdf',
+    fontStyle: 'italic',
+    paddingTop:10
   },
-  shutterBtnInner: {
-    width: 70,
-    height: 70,
+  imageContainer: {
     borderRadius: 50,
+    elevation:5,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  postImage: {
+    width: '100%',
+    height: '100%',
+  },
+  userInfoContainer: {
+    position: 'absolute',
+    bottom: 16,
+    left: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  avatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 2,
+    borderColor: 'white',
+  },
+  userTextInfo: {
+    marginLeft: 12,
+  },
+  userName: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  timePosted: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 12,
+  },
+  messageInputContainer: {
+    position: 'absolute',
+    bottom: 50,
+    left: 0,
+    right: 0,
+    width: '100%',
+    padding: 16,
+  },
+  messageInputButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 24,
+    height:60
+  },
+  messageInputPlaceholder: {
+    color: 'rgba(255, 255, 255, 0.5)',
+    fontSize: 16,
+  },
+  reactionContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  reactionIcon: {
+    marginLeft: 8,
   },
 });

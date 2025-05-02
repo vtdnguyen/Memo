@@ -8,7 +8,7 @@ interface IconProps {
 
 // Define the object structure with proper typing
 export const icons: Record<string, (props: IconProps) => JSX.Element> = {
-  index: (props: IconProps) => <Feather name="camera" size={30} {...props} />,
-  explore: (props: IconProps) => <Feather name="compass" size={30} {...props} />,
-  profile: (props: IconProps) => <AntDesign name="user" size={30} {...props} />,
+  "(home)": (props: IconProps) => <AntDesign name="home" size={36} {...props} />,
+  explore: (props: IconProps) => <Feather name="compass" size={36} {...props} />,
+  profile: (props: IconProps) => <AntDesign name="user" size={36} {...props} />,
 };
