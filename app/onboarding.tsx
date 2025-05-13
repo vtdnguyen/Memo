@@ -1,5 +1,5 @@
 import {StyleSheet, View, FlatList, ViewToken} from 'react-native';
-import React from 'react';
+import React, { useRef } from 'react';
 import Animated, {
   useSharedValue,
   useAnimatedScrollHandler,
@@ -21,16 +21,18 @@ const OnboardingScreen = () => {
   }: {
     viewableItems: ViewToken[];
   }) => {
-    if (viewableItems[0].index !== null) {
-      flatListIndex.value = viewableItems[0].index;
+    if (viewableItems.length > 0 && viewableItems[0].index !== null) {
+      flatListIndex.value = viewableItems[0].index!;
     }
   };
+  
 
   const onScroll = useAnimatedScrollHandler({
     onScroll: event => {
       x.value = event.contentOffset.x;
     },
   });
+  const onViewRef = useRef(onViewableItemsChanged);
 
   return (
     <View style={styles.container}>
@@ -47,7 +49,7 @@ const OnboardingScreen = () => {
         bounces={false}
         pagingEnabled={true}
         showsHorizontalScrollIndicator={false}
-        onViewableItemsChanged={onViewableItemsChanged}
+        onViewableItemsChanged={onViewRef.current}
         viewabilityConfig={{
           minimumViewTime: 300,
           viewAreaCoveragePercentThreshold: 10,

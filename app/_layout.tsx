@@ -3,7 +3,8 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from 'react';
 import { StatusBar } from 'react-native';
-
+import { Provider } from 'react-redux';
+import { store } from '@/src/redux/store';
 
 const RootLayoutNav = () => {
   useEffect(() => {
@@ -15,7 +16,9 @@ const RootLayoutNav = () => {
     return (
       <>
       <Stack>
+        
         <Stack.Screen name="sign-in" options={{ headerShown: false }} />
+        <Stack.Screen name="sign-up" options={{ headerShown: false }} />
         <Stack.Screen name="onboarding" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
@@ -29,7 +32,9 @@ export default function RootLayout() {
   StatusBar.setBackgroundColor('transparent');
   return (
     <AuthProvider>
-        <RootLayoutNav />
+        <Provider store={store}>
+            <RootLayoutNav />
+        </Provider>
     </AuthProvider>
   );
 }

@@ -1,214 +1,256 @@
-import { router } from 'expo-router';
-import {
-  Image,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import React, { useState } from "react";
-import { colors } from "@/assets/onboarding/colors";
-import { fonts } from "@/assets/onboarding/font";
+import { View, StyleSheet, Text } from "react-native";
+import Title from "@/src/components/auth/title";
+import Privacy from "@/src/components/auth/privacy";
+import ReturnButton from "@/src/components/auth/returnButton";
+import AuthInput from "@/src/components/auth/authInput";
+import ConfirmButton from "@/src/components/auth/confirmButton";
+import SubButton from "@/src/components/auth/subButton";
+import { useEffect, useState } from "react";
+import { useCustomFonts } from "@/src/hook/useFonts";
+import * as SplashScreen from "expo-splash-screen";
+import AuthPopup from "@/src/components/auth/authPopup";
+import { useAppDispatch, useAppSelector } from "@/src/redux/hooks";
+import { login, clearError } from "@/src/redux/slices/authSlice";
+import { RootState } from "@/src/redux/store";
+import { router } from "expo-router";
+import { API_URL_LOCAL } from "@/src/redux/slices/authSlice";
 
-import { useNavigation } from "@react-navigation/native";
-import { Feather } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAuth } from "@/src/context/AuthContext";
+SplashScreen.preventAutoHideAsync();
 
-const LoginScreen = () => {
-  const navigation = useNavigation();
-  const [secureEntery, setSecureEntery] = useState(true);
-  const [email, setEmail] = useState("");
+type Step = "input" | "password";
+
+export default function SignInScreen() {
+  const [fontsLoaded] = useCustomFonts();
+  const [error, setError] = useState("");
+  const [isConfirmButtonPressed, setIsConfirmButtonPressed] = useState(false);
+  const [buttonActive, setButtonActive] = useState(false);
   const [password, setPassword] = useState("");
-  const authContext = useAuth();
-  const onLogin = authContext?.onLogin;
+  const [typeUser, setTypeUser] = useState<
+    "email" | "phone" | "name" | "password"
+  >("email");
+  const [isVisiblePopup, setIsVisiblePopup] = useState(false);
+  const [currentStep, setCurrentStep] = useState<Step>("input");
+  const [userIdentifier, setUserIdentifier] = useState("");
 
-  const handleGoBack = () => {
-    navigation.goBack();
-  };
-  const handleSignup = () => {
-  };
-  const insets = useSafeAreaInsets();
+  const dispatch = useAppDispatch();
+  const {
+    loading,
+    error: authError,
+    isAuthenticated,
+  } = useAppSelector((state: RootState) => state.auth);
 
-  const handleSignin = () => {
-    const res = signIn();
-    router.push('/(tabs)');
-  };
-
-  const signIn = async () => {
-    if (onLogin) {
-      const response = await onLogin(email, password);  
-      if (response.error) {
-        alert(response.msg);
+  useEffect(() => {
+    async function prepare() {
+      if (fontsLoaded) {
+        await SplashScreen.hideAsync();
       }
-      else return response
-    } else {
-      console.error("onLogin function error");
     }
-  }
+    prepare();
+  }, [fontsLoaded]);
+
+  useEffect(() => {
+    const handleLogin = async (data: any) => {
+      const response = await dispatch(login(data));
+      console.log("login response", response);
+      if (response.type === "auth/login/fulfilled") {
+        console.log("login fulfilled");
+        // router.push(`${API_URL_LOCAL}/profile`);
+      }
+    };
+    if (isConfirmButtonPressed) {
+      let isValid = true;
+
+      if (currentStep === "input") {
+        if (typeUser === "email") {
+          const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+          if (!emailRegex.test(userIdentifier)) {
+            setError("Email không hợp lệ");
+            isValid = false;
+          }
+        }
+
+        if (typeUser === "phone") {
+          const phoneRegex = /^[0-9]{10}$/;
+          if (!phoneRegex.test(userIdentifier)) {
+            setError("Số điện thoại không hợp lệ");
+            isValid = false;
+          }
+        }
+
+        if (isValid) {
+          setError("");
+          setCurrentStep("password");
+          setButtonActive(false);
+        }
+      } else if (currentStep === "password") {
+        if (password.length < 8) {
+          setError("Mật khẩu phải có ít nhất 8 ký tự");
+          isValid = false;
+        }
+
+        if (isValid) {
+          const data = {
+            account: userIdentifier,
+            password: password,
+          };
+          handleLogin(data);
+          
+          setError("");
+          setUserIdentifier("");
+          setPassword("");
+          setButtonActive(false);
+        }
+      }
+
+      setIsConfirmButtonPressed(false);
+    }
+  }, [isConfirmButtonPressed, password, typeUser, currentStep, userIdentifier]);
+
+  useEffect(() => {
+    if (authError) {
+      setError(authError);
+      setIsVisiblePopup(true);
+      dispatch(clearError());
+    }
+  }, [authError, dispatch]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push(`/profile`);
+    }
+  }, [isAuthenticated]);
+
+  if (!fontsLoaded) return null;
 
   return (
-    <View style={{
-      ...styles.container,
-      paddingTop: insets.top,
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#272727",
+      }}
+    >
+      <ReturnButton
+        onPress={() => {
+          if (currentStep === "password") {
+            setCurrentStep("input");
+            setButtonActive(userIdentifier.length > 0);
+            setTypeUser(typeUser === "email" ? "email" : "phone");
+            setError("");
+            setIsVisiblePopup(false);
+            setIsConfirmButtonPressed(false);
+          } else {
+            console.log("return to onboarding");
+            router.push(`${API_URL_LOCAL}/onboarding`);
+          }
+        }}
+      />
 
-    }}>
-      <View style={styles.textContainer}>
-        <Text style={styles.headingText}>Chào</Text>
-        <Text style={styles.headingText}>Mừng</Text>
-        <Text style={styles.headingText}>Bạn</Text>
+      <View
+        style={{
+          flex: 1,
+          gap: 10,
+          justifyContent: "center",
+          alignItems: "center",
+          ...(isVisiblePopup && { pointerEvents: "none" }),
+        }}
+      >
+        <Title
+          text={
+            currentStep === "input"
+              ? `Nhập ${typeUser === "email" ? "email" : "SĐT"} của bạn`
+              : "Nhập mật khẩu"
+          }
+        />
+        <View style={styles.errorContainer}>
+          <AuthInput
+            type={currentStep === "input" ? typeUser : "password"}
+            inputValue={currentStep === "input" ? userIdentifier : password}
+            setInputValue={
+              currentStep === "input" ? setUserIdentifier : setPassword
+            }
+            placeholder={
+              currentStep === "input"
+                ? typeUser === "email"
+                  ? "Email"
+                  : "Số điện thoại"
+                : "Mật khẩu"
+            }
+            setButtonActive={setButtonActive}
+            typeUser={typeUser}
+          />
+          {error ? <Text style={styles.error}>{error}</Text> : null}
+        </View>
+        {currentStep === "input" && (
+          <SubButton
+            text={`Sử dụng ${typeUser === "email" ? "SĐT" : "email"}`}
+            setTypeUser={setTypeUser}
+            type={typeUser}
+          />
+        )}
+        {currentStep === "password" && (
+          <SubButton
+            text={`Quên mật khẩu`}
+            setTypeUser={() => {}}
+            type={typeUser}
+          />
+        )}
       </View>
-      {/* form  */}
-      <View style={styles.formContainer}>
-        <View style={styles.inputContainer}>
-          <Feather name={"mail"} size={30} color={colors.secondary} />
-          <TextInput
-            style={styles.textInput}
-            placeholder="Enter your email"
-            placeholderTextColor={colors.secondary}
-            keyboardType="email-address"
-          />
-        </View>
-        <View style={styles.inputContainer}>
-          <Feather name={"lock"} size={30} color={colors.secondary} />
-          <TextInput
-            style={styles.textInput}
-            placeholder="Enter your password"
-            placeholderTextColor={colors.secondary}
-            secureTextEntry={secureEntery}
-          />
-          <TouchableOpacity
-            onPress={() => {
-              setSecureEntery((prev) => !prev);
-            }}
-          >
-            <Feather name={"eye"} size={20} color={colors.secondary} />
-          </TouchableOpacity>
-        </View>
-        <TouchableOpacity>
-          <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.loginButtonWrapper} onPress={handleSignin}>
-          <Text style={styles.loginText}>Login</Text>
-        </TouchableOpacity>
-        <Text style={styles.continueText}>or continue with</Text>
-        <TouchableOpacity style={styles.googleButtonContainer}>
-          <Feather 
-            name='box'
-            style={styles.googleImage}
-          />
-          <Text style={styles.googleText}>Google</Text>
-        </TouchableOpacity>
-        <View style={styles.footerContainer}>
-          <Text style={styles.accountText}>Don’t have an account?</Text>
-          <TouchableOpacity onPress={handleSignup}>
-            <Text style={styles.signupText}>Sign up</Text>
-          </TouchableOpacity>
-        </View>
+
+      <View
+        style={{
+          width: "100%",
+          gap: 20,
+          marginBottom: 36,
+          alignItems: "center",
+          ...(isVisiblePopup && { pointerEvents: "none" }),
+        }}
+      >
+        <Privacy />
+        <ConfirmButton
+          setIsConfirmButtonPressed={setIsConfirmButtonPressed}
+          buttonActive={buttonActive}
+        />
       </View>
+
+      {isVisiblePopup && (
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(135, 135, 135, 0.18)",
+            zIndex: 10,
+          }}
+          pointerEvents="auto"
+        />
+      )}
+
+      {isVisiblePopup && (
+        <AuthPopup
+          title={`Lỗi đăng nhập`}
+          description={`Thông tin tài khoản hoặc mật khẩu không chính xác`}
+          setIsVisiblePopup={setIsVisiblePopup}
+        />
+      )}
     </View>
   );
-};
-
-export default LoginScreen;
+}
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.white,
-    padding: 20,
-  },
-  backButtonWrapper: {
-    height: 40,
-    width: 40,
-    backgroundColor: colors.gray,
-    borderRadius: 20,
+  errorContainer: {
+    height: 100,
     justifyContent: "center",
     alignItems: "center",
   },
-  textContainer: {
-    marginVertical: 20,
-  },
-  headingText: {
-    fontSize: 42,
-    color: colors.primary,
-    fontFamily: 'Raleway-Bold',
-  },
-  formContainer: {
-    marginTop: 20,
-  },
-  inputContainer: {
-    borderWidth: 1,
-    borderColor: colors.secondary,
-    borderRadius: 100,
-    paddingHorizontal: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 2,
-    marginVertical: 10,
-  },
-  textInput: {
-    flex: 1,
-    paddingHorizontal: 10,
-    fontFamily: fonts.Light,
-  },
-  forgotPasswordText: {
-    textAlign: "right",
-    color: colors.primary,
-    fontFamily: fonts.SemiBold,
-    marginVertical: 10,
-  },
-  loginButtonWrapper: {
-    backgroundColor: colors.primary,
-    borderRadius: 100,
-    marginTop: 20,
-  },
-  loginText: {
-    color: colors.white,
-    fontSize: 20,
-    fontFamily: fonts.SemiBold,
-    textAlign: "center",
-    padding: 10,
-  },
-  continueText: {
-    textAlign: "center",
-    marginVertical: 20,
-    fontSize: 14,
-    fontFamily: fonts.Regular,
-    color: colors.primary,
-  },
-  googleButtonContainer: {
-    flexDirection: "row",
-    borderWidth: 2,
-    borderColor: colors.primary,
-    borderRadius: 100,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 10,
-    gap: 10,
-  },
-  googleImage: {
-    height: 20,
-    width: 20,
-  },
-  googleText: {
-    fontSize: 20,
-    fontFamily: fonts.SemiBold,
-  },
-  footerContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    marginVertical: 20,
-    gap: 5,
-  },
-  accountText: {
-    color: colors.primary,
-    fontFamily: fonts.Regular,
-  },
-  signupText: {
-    color: colors.primary,
-    fontFamily: fonts.Bold,
+  error: {
+    position: "absolute",
+    bottom: -2,
+    color: "#FF6B6B",
+    fontSize: 12,
+    fontFamily: "Rounded Mplus 1c Bold",
   },
 });
