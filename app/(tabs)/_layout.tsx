@@ -4,7 +4,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { TabBar } from '@/src/components/TabBar/TabBar';
 import { useAuth } from '@/src/context/AuthContext';
 import { createContext, useState, useEffect, useCallback } from 'react';
-
+import { useAppSelector } from '@/src/redux/hooks';
 interface TabBarContextType {
   showTabBar: () => void;
   hideTabBar: () => void;
@@ -20,8 +20,9 @@ export const TabBarContext = createContext<TabBarContextType>({
 export default function TabLayout() {
   const authContext = useAuth();
   const authState = authContext?.authState;
-  const isFirstTimeUser = authContext?.isFirstTimeUser;
-  const loading = authContext?.loading;
+  const isFirstTimeUser = useAppSelector(state => state.auth.isFirstTimeUser);
+  const isAuthenticated = useAppSelector(state => state.auth.isAuthenticated);
+  const loading = useAppSelector(state => state.auth.loading);
   const [tabBarVisible, setTabBarVisible] = useState<boolean>(true);
 
   // Handle keyboard visibility
@@ -56,8 +57,9 @@ export default function TabLayout() {
   if (loading) {
     return <Text style={{ fontSize: 100 }}>Loading...</Text>;
   }
+  console.log("isAuthenticated", isAuthenticated);
   
-  if (!authState?.authenticated) {
+  if (!isAuthenticated) {
     if (isFirstTimeUser) {
       return <Redirect href={'/onboarding'} />;
     } else {
@@ -69,10 +71,10 @@ export default function TabLayout() {
     <TabBarContext.Provider value={tabBarContextValue}>
       <View style={{ flex: 1 }}>
         <Tabs tabBar={(props) => <TabBar {...props} visible={tabBarVisible} />}>
-          <Tabs.Screen name="explore" options={{ title: 'Explore', headerShown: false }} />
-          <Tabs.Screen name="(home)" options={{ title: 'Home', headerShown: false }} />
-          <Tabs.Screen name="profile" options={{ title: 'Profile', headerShown: false }} />
-          <Tabs.Screen name="(message)" options={{ title: 'Message', headerShown: false }} />
+          <Tabs.Screen name="explore" options={{ title: 'Explore', tabBarLabel: 'Explore', headerShown: false }} />
+          <Tabs.Screen name="home" options={{ title: 'Home', tabBarLabel: 'Home', headerShown: false }} />
+          <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarLabel: 'Profile', headerShown: false }} />
+          <Tabs.Screen name="message" options={{ title: 'Message', tabBarLabel: 'Message', headerShown: false }} />
         </Tabs>
       </View>
     </TabBarContext.Provider>

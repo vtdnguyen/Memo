@@ -14,9 +14,11 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import {useNavigation} from '@react-navigation/native';
-import {OnboardingData} from '@/components/onboarding/data';
-import { useAuth } from '@/src/context/AuthContext';
+import {OnboardingData} from '@/src/components/onboarding/data';
+import { API_URL_LOCAL, useAuth } from '@/src/context/AuthContext';
 import { router } from 'expo-router';
+import { completeOnboarding } from '@/src/redux/slices/authSlice';
+import { useAppDispatch } from '@/src/redux/hooks';
 
 type Props = {
   dataLength: number;
@@ -29,8 +31,7 @@ const CustomButton = ({flatListRef, flatListIndex, dataLength, x}: Props) => {
   const {width: SCREEN_WIDTH} = useWindowDimensions();
   const navigation = useNavigation();
 
-   const authContext = useAuth();
-    const completeOnboarding = authContext?.completeOnboarding;
+   const dispatch = useAppDispatch();
     
   const buttonAnimationStyle = useAnimatedStyle(() => {
     return {
@@ -87,12 +88,19 @@ const CustomButton = ({flatListRef, flatListIndex, dataLength, x}: Props) => {
 
   return (
     <TouchableWithoutFeedback
-      onPress={() => {
+      onPress={async () => {
         if (flatListIndex.value < dataLength - 1) {
-          flatListRef.current?.scrollToIndex({index: flatListIndex.value + 1});
+          console.log("scroll to index", flatListIndex.value, dataLength);
+          flatListRef.current?.scrollToIndex({index: flatListIndex.value, animated: true});
+          flatListIndex.value = flatListIndex.value + 1;
         } else {
-          completeOnboarding?.();
-          router.push('/sign-in');
+          const response = await dispatch(completeOnboarding());
+          if (response.type === "auth/completeOnboarding/fulfilled") {
+            console.log("complete onboarding");
+            router.push(`${API_URL_LOCAL}/sign-in`);
+          } else {
+            console.log("error", response);
+          }
         }
       }}>
       <Animated.View

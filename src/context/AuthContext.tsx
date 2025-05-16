@@ -4,6 +4,7 @@ import axios from 'axios';
 
 interface AuthProps {
   authState?: {token: string| null; authenticated: boolean | null};
+  setAuthState?: (authState: {token: string| null; authenticated: boolean | null}) => void;
   onRegister?: (email: string, password: string) => Promise<any>;
   onLogin?: (email: string, password: string) => Promise<any>;
   onLogout?: () => Promise<any>;
@@ -13,7 +14,8 @@ interface AuthProps {
 }
 
 const TOKEN_KEY = 'my-jwt';
-export const API_URL = 'http://localhost:3000';
+export const API_URL = 'https://memo-app-be.onrender.com';
+export const API_URL_LOCAL = 'http://localhost:8081';
 const AuthContext = createContext<AuthProps | undefined>(undefined);
 
 
@@ -96,6 +98,7 @@ export const AuthProvider = ({children} : any) => {
     completeOnboarding,
     isFirstTimeUser,
     authState,
+    setAuthState,
     loading
   };
 
