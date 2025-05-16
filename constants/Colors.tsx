@@ -21,7 +21,8 @@ export const colors =
     yellow: '#FFCC00',
     background: '#272727',
     outline: '#C8A673',
-    textCol: 'rgba(255, 255, 255, 0.7)'
+    textCol: 'rgba(255, 255, 255, 0.7)',
+    bg: 'rgba(255, 255, 255, 0.1)'
   }
 
 
