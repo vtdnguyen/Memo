@@ -1,59 +1,63 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  FlatList, 
-  TextInput, 
-  TouchableOpacity, 
-  KeyboardAvoidingView, 
-  Platform, 
-  Image
-} from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Message } from './types';
-import { colors } from '@/constants/Colors';
+import React, { useState, useRef, useEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TextInput,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  Image,
+} from "react-native";
+import { router, useLocalSearchParams } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Message } from "@/src/types/message";
+import { colors } from "@/constants/Colors";
 
 // Mock messages for the chat - in a real app, you'd fetch these based on the friendId
 const mockMessages: Message[] = [
   {
-    id: '1',
-    text: 'Hey, how are you doing?',
-    timestamp: '10:00 AM',
-    sender: 'them',
+    id: "1",
+    text: "Hey, how are you doing?",
+    timestamp: "10:00 AM",
+    sender: "them",
   },
   {
-    id: '2',
-    text: 'I\'m good! Just finished my work for today. How about you?',
-    timestamp: '10:02 AM',
-    sender: 'me',
+    id: "2",
+    text: "I'm good! Just finished my work for today. How about you?",
+    timestamp: "10:02 AM",
+    sender: "me",
   },
   {
-    id: '3',
-    text: 'Same here. Are we still meeting tomorrow for coffee?',
-    timestamp: '10:05 AM',
-    sender: 'them',
+    id: "3",
+    text: "Same here. Are we still meeting tomorrow for coffee?",
+    timestamp: "10:05 AM",
+    sender: "them",
   },
   {
-    id: '4',
-    text: 'Yes, definitely! How about 2pm at the usual place?',
-    timestamp: '10:07 AM',
-    sender: 'me',
+    id: "4",
+    text: "Yes, definitely! How about 2pm at the usual place?",
+    timestamp: "10:07 AM",
+    sender: "me",
   },
   {
-    id: '5',
-    text: 'Sounds perfect. See you then!',
-    timestamp: '10:08 AM',
-    sender: 'them',
+    id: "5",
+    text: "Sounds perfect. See you then!",
+    timestamp: "10:08 AM",
+    sender: "them",
   },
 ];
 
 export default function ChatRoomScreen() {
-  const { id, name,avatar } = useLocalSearchParams<{ id: string, name: string , avatar:string }>();
+  const { id, name, avatar } = useLocalSearchParams<{
+    id: string;
+    name: string;
+    avatar: string;
+  }>();
   const [messages, setMessages] = useState<Message[]>(mockMessages);
-  const [newMessage, setNewMessage] = useState('');
+  const [newMessage, setNewMessage] = useState("");
   const flatListRef = useRef<FlatList>(null);
   const insets = useSafeAreaInsets();
 
@@ -67,19 +71,22 @@ export default function ChatRoomScreen() {
   }, []);
 
   const handleSendMessage = () => {
-    if (newMessage.trim() === '') return;
+    if (newMessage.trim() === "") return;
 
-    const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    
+    const timestamp = new Date().toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
     const message: Message = {
       id: Date.now().toString(),
       text: newMessage.trim(),
       timestamp,
-      sender: 'me',
+      sender: "me",
     };
 
     setMessages([...messages, message]);
-    setNewMessage('');
+    setNewMessage("");
 
     // Scroll to the new message
     setTimeout(() => {
@@ -92,18 +99,30 @@ export default function ChatRoomScreen() {
   };
 
   const renderMessageItem = ({ item }: { item: Message }) => (
-    <View style={[
-      styles.messageContainer,
-      item.sender === 'me' ? styles.myMessageContainer : styles.theirMessageContainer
-    ]}>
-      <View style={[
-        styles.messageBubble,
-        item.sender === 'me' ? styles.myMessageBubble : styles.theirMessageBubble
-      ]}>
-        <Text style={[
-          styles.messageText,
-          item.sender === 'me' ? styles.myMessageText : styles.theirMessageText
-        ]}>
+    <View
+      style={[
+        styles.messageContainer,
+        item.sender === "me"
+          ? styles.myMessageContainer
+          : styles.theirMessageContainer,
+      ]}
+    >
+      <View
+        style={[
+          styles.messageBubble,
+          item.sender === "me"
+            ? styles.myMessageBubble
+            : styles.theirMessageBubble,
+        ]}
+      >
+        <Text
+          style={[
+            styles.messageText,
+            item.sender === "me"
+              ? styles.myMessageText
+              : styles.theirMessageText,
+          ]}
+        >
           {item.text}
         </Text>
       </View>
@@ -117,22 +136,15 @@ export default function ChatRoomScreen() {
         <TouchableOpacity onPress={handleBack} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={colors.textCol} />
         </TouchableOpacity>
-        
+
         <View style={styles.avatarContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.friendContainer}
             activeOpacity={0.8} // Improved tactile feedback
           >
-              <View
-                style={[
-                styles.avatarRing
-                ]}
-              >
-                <Image 
-                  source={{ uri: avatar }}
-                  style={styles.avatar}
-                />
-              </View>
+            <View style={[styles.avatarRing]}>
+              <Image source={{ uri: avatar }} style={styles.avatar} />
+            </View>
           </TouchableOpacity>
         </View>
 
@@ -149,7 +161,6 @@ export default function ChatRoomScreen() {
         contentContainerStyle={styles.messagesList}
         showsVerticalScrollIndicator={true}
       />
-
     </View>
   );
 }
@@ -157,28 +168,28 @@ export default function ChatRoomScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background  ,
+    backgroundColor: colors.background,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingVertical: 15,
     paddingHorizontal: 16,
   },
   backButton: {
-    padding:5
+    padding: 5,
   },
   headerProfile: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
   headerName: {
     fontSize: 22,
-    fontWeight: '600',
-    color: colors.textCol
+    fontWeight: "600",
+    color: colors.textCol,
   },
   optionsButton: {
     paddingLeft: 10,
@@ -190,13 +201,13 @@ const styles = StyleSheet.create({
   },
   messageContainer: {
     marginBottom: 12,
-    maxWidth: '80%',
+    maxWidth: "80%",
   },
   myMessageContainer: {
-    alignSelf: 'flex-end',
+    alignSelf: "flex-end",
   },
   theirMessageContainer: {
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
   },
   messageBubble: {
     borderRadius: 18,
@@ -204,41 +215,41 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   myMessageBubble: {
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
   },
   theirMessageBubble: {
-    backgroundColor: '#e5e5ea',
+    backgroundColor: "#e5e5ea",
   },
   messageText: {
     fontSize: 16,
   },
   myMessageText: {
-    color: '#fff',
+    color: "#fff",
   },
   theirMessageText: {
-    color: '#000',
+    color: "#000",
   },
   timestamp: {
     fontSize: 11,
-    color: '#8e8e93',
+    color: "#8e8e93",
     marginTop: 4,
-    alignSelf: 'flex-end',
+    alignSelf: "flex-end",
   },
   keyboardAvoidingView: {
-    width: '100%',
+    width: "100%",
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderTopWidth: 1,
-    borderTopColor: '#efefef',
+    borderTopColor: "#efefef",
   },
   textInputWrapper: {
     flex: 1,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: "#f0f0f0",
     borderRadius: 20,
     paddingHorizontal: 12,
     marginRight: 8,
@@ -252,12 +263,12 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   avatarContainer: {
-    position: 'relative',
+    position: "relative",
   },
   avatar: {
     width: 40,
@@ -269,14 +280,14 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 25,
     padding: 3,
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     borderWidth: 2,
-    borderColor: '#888888',
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderColor: "#888888",
+    justifyContent: "center",
+    alignItems: "center",
   },
   friendContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

@@ -1,3 +1,4 @@
+import { colors } from "@/constants/Colors";
 import { View, Text, StyleSheet } from "react-native";
 
 interface TitleProps {
@@ -26,7 +27,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     lineHeight: 32,
     letterSpacing: -0.5,
-    color: "#FFFFFF",
+    color: colors.white,
     textAlign: "center",
   },
 });

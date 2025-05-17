@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, Image } from "react-native";
 import MiniAvatar from "./miniAvatar";
+import { colors } from "@/constants/Colors";
 
 interface UserTabProps {
   username: string;
@@ -19,9 +20,9 @@ const styles = StyleSheet.create({
   container: {
     width: 320,
     height: 70,
-    backgroundColor: "#454343",
+    backgroundColor: colors._input,
     borderWidth: 3,
-    borderColor: "#979797",
+    borderColor: colors._privacyPolicyText,
     borderRadius: 27,
     display: "flex",
     flexDirection: "row",
@@ -41,7 +42,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     lineHeight: 24,
     textAlign: "left",
-    color: "#FFC877",
+    color: colors._confirmButton,
   },
 });
 

@@ -1,3 +1,4 @@
+import { colors } from "@/constants/Colors";
 import { View, Text, StyleSheet } from "react-native";
 
 export default function Privacy() {
@@ -24,9 +25,9 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     letterSpacing: -0.5,
     textAlign: "center",
-    color: "#454343",
+    color: colors._privacyPolicy,
   },
   link: {
-    color: "#979797",
+    color: colors._privacyPolicyText,
   },
 });

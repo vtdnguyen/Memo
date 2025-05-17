@@ -13,12 +13,11 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import {useNavigation} from '@react-navigation/native';
 import {OnboardingData} from '@/src/components/onboarding/data';
-import { API_URL_LOCAL, useAuth } from '@/src/context/AuthContext';
 import { router } from 'expo-router';
 import { completeOnboarding } from '@/src/redux/slices/authSlice';
 import { useAppDispatch } from '@/src/redux/hooks';
+import { LOCAL_URL } from '@/src/redux/slices/authSlice';
 
 type Props = {
   dataLength: number;
@@ -29,7 +28,6 @@ type Props = {
 
 const CustomButton = ({flatListRef, flatListIndex, dataLength, x}: Props) => {
   const {width: SCREEN_WIDTH} = useWindowDimensions();
-  const navigation = useNavigation();
 
    const dispatch = useAppDispatch();
     
@@ -89,22 +87,28 @@ const CustomButton = ({flatListRef, flatListIndex, dataLength, x}: Props) => {
   return (
     <TouchableWithoutFeedback
       onPress={async () => {
-        if (flatListIndex.value < dataLength - 1) {
-          console.log("scroll to index", flatListIndex.value, dataLength);
-          flatListRef.current?.scrollToIndex({index: flatListIndex.value, animated: true});
-          flatListIndex.value = flatListIndex.value + 1;
+        const isLastSlide = flatListIndex.value >= dataLength - 1;
+
+        if (!isLastSlide) {
+          const nextIndex = flatListIndex.value + 1;
+          flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
+          flatListIndex.value = nextIndex;
         } else {
-          const response = await dispatch(completeOnboarding());
-          if (response.type === "auth/completeOnboarding/fulfilled") {
-            console.log("complete onboarding");
-            router.push(`${API_URL_LOCAL}/sign-in`);
-          } else {
-            console.log("error", response);
+          try {
+            const response = await dispatch(completeOnboarding());
+            if (response.type === "auth/completeOnboarding/fulfilled") {
+              console.log("Onboarding completed");
+              router.push(`${LOCAL_URL}/sign-in`);
+            } else {
+              console.error("Error completing onboarding:", response);
+            }
+          } catch (err) {
+            console.error("Dispatch failed:", err);
           }
         }
-      }}>
-      <Animated.View
-        style={[styles.container, buttonAnimationStyle, animatedColor]}>
+      }}
+    >
+      <Animated.View style={[styles.container, buttonAnimationStyle, animatedColor]}>
         <Animated.Text style={[styles.textButton, textAnimationStyle]}>
           Get Started
         </Animated.Text>
@@ -114,6 +118,7 @@ const CustomButton = ({flatListRef, flatListIndex, dataLength, x}: Props) => {
         />
       </Animated.View>
     </TouchableWithoutFeedback>
+
   );
 };
 

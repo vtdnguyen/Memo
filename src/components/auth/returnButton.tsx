@@ -1,3 +1,4 @@
+import { colors } from "@/constants/Colors";
 import { TouchableOpacity, StyleSheet } from "react-native";
 import Svg, { Circle, Path } from "react-native-svg";
 
@@ -9,7 +10,7 @@ export default function ReturnButton({ onPress }: ReturnButtonProps) {
   return (
     <TouchableOpacity style={styles.button} onPress={onPress}>
       <Svg width="46" height="46" viewBox="0 0 46 46" style={StyleSheet.absoluteFill}>
-        <Circle cx="23" cy="23" r="23" fill="#D9D9D9" fillOpacity="0.2" />
+        <Circle cx="23" cy="23" r="23" fill={colors._icon} fillOpacity="0.2" />
       </Svg>
       <Svg width="24" height="24" viewBox="0 0 24 24">
         <Path

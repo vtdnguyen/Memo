@@ -1,8 +1,10 @@
+import { colors } from "@/constants/Colors";
 import { View, StyleSheet, Image } from "react-native";
-import { useSelector } from "react-redux";
+import { useAppSelector } from "@/src/redux/hooks";
+
 
 export default function Avatar() {
-    const user = useSelector((state: any) => state.user);
+    const user = useAppSelector((state: any) => state.user);
     const image = user.avatar;
   return (
     <View style={styles.wrapper}>
@@ -21,7 +23,7 @@ const styles = StyleSheet.create({
   wrapper: {
     width: 100,
     height: 100,
-    borderColor: '#3A3A3A',
+    borderColor: colors._borderAvatar,
     borderWidth: 6,
     borderRadius: 999,
     display: 'flex',
@@ -31,7 +33,7 @@ const styles = StyleSheet.create({
   container: {
     width: 92,
     height: 92,
-    borderColor: '#000000',
+    borderColor: colors.black,
     borderWidth: 4,
     borderRadius: 999,
     display: 'flex',

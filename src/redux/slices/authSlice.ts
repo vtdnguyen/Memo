@@ -1,8 +1,9 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { RootState } from '../store';
 
 export const API_URL = 'https://memo-app-be.onrender.com';
-export const API_URL_LOCAL = 'http://localhost:8081';
+export const LOCAL_URL = 'http://localhost:8081';
 
 const initialState: AuthState = {
   token: null,
@@ -24,17 +25,40 @@ export const completeOnboarding = createAsyncThunk(
     }
   }
 );
+
+export const getUser = createAsyncThunk(
+  'user/me',
+  async (_, { rejectWithValue, getState }) => {
+    const state = getState() as RootState;
+    const token = state.auth.token;
+    console.log("token", token);
+    if (!token) return rejectWithValue('Token không tồn tại');
+
+    try {
+      console.log("get user");
+      const response = await axios.get(
+        `${API_URL}/user/me`,
+        { withCredentials: true, },
+      );      
+      console.log("get user response", response);
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Lấy thông tin người dùng thất bại');
+    }
+  }
+);
+
 export const login = createAsyncThunk(
   'auth/login',
   async (credentials: { account: string; password: string }, { rejectWithValue }) => {
     try {
       console.log("login credentials", credentials);
-      const response = await axios.post(`${API_URL}/auth/login`, credentials);
+      const response = await axios.post(
+        `${API_URL}/auth/login`, 
+        credentials,
+        { withCredentials: true, }
+      );
       console.log("login fetch response", response);
-      
-      const { accessTokenCookie, refreshTokenCookie } = response.data;
-      axios.defaults.headers.common['Authorization'] = `Bearer ${accessTokenCookie}`;
-
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Đăng nhập thất bại');
@@ -53,7 +77,11 @@ export const signup = createAsyncThunk(
     username: string;
   }, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${API_URL}/auth/register`, userData);
+      const response = await axios.post(
+        `${API_URL}/auth/register`, 
+        userData,
+        { withCredentials: true, }
+      );
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Đăng ký thất bại');
@@ -99,15 +127,32 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
+      // Get user
+      .addCase(getUser.pending, (state) => {
+        // TODO: get user and navigate to profile so must be async loading
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(getUser.fulfilled, (state, action) => {
+        state.loading = false;
+        console.log("get user fulfilled action.payload", action.payload);
+        state.user = action.payload;
+        console.log("state.user", state.user);
+      })
+      .addCase(getUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
       // Login
       .addCase(login.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(login.fulfilled, (state, action) => {
-        state.loading = false;
+        // TODO: get user and navigate to profile so must be async loading
+        state.loading = true;
         state.isAuthenticated = true;
-        console.log("login fulfilled", action.payload);
+        console.log("isAuthenticated", state.isAuthenticated);
         state.token = action.payload.accessTokenCookie.token;
       })
       .addCase(login.rejected, (state, action) => {

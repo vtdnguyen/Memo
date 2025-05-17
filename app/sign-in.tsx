@@ -1,19 +1,21 @@
-import { View, StyleSheet, Text } from "react-native";
+import { View, StyleSheet, Text, ActivityIndicator } from "react-native";
 import Title from "@/src/components/auth/title";
 import Privacy from "@/src/components/auth/privacy";
 import ReturnButton from "@/src/components/auth/returnButton";
 import AuthInput from "@/src/components/auth/authInput";
 import ConfirmButton from "@/src/components/auth/confirmButton";
 import SubButton from "@/src/components/auth/subButton";
-import { useEffect, useState } from "react";
+import AuthPopup from "@/src/components/auth/authPopup";
+import { useEffect, useState, useCallback } from "react";
 import { useCustomFonts } from "@/src/hook/useFonts";
 import * as SplashScreen from "expo-splash-screen";
-import AuthPopup from "@/src/components/auth/authPopup";
 import { useAppDispatch, useAppSelector } from "@/src/redux/hooks";
-import { login, clearError } from "@/src/redux/slices/authSlice";
+import { login, clearError, getUser } from "@/src/redux/slices/authSlice";
 import { RootState } from "@/src/redux/store";
-import { router } from "expo-router";
-import { API_URL_LOCAL } from "@/src/redux/slices/authSlice";
+import { useRouter } from 'expo-router';
+import { colors } from "@/constants/Colors";
+import { LOCAL_URL } from "@/src/redux/slices/authSlice";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -25,86 +27,68 @@ export default function SignInScreen() {
   const [isConfirmButtonPressed, setIsConfirmButtonPressed] = useState(false);
   const [buttonActive, setButtonActive] = useState(false);
   const [password, setPassword] = useState("");
-  const [typeUser, setTypeUser] = useState<
-    "email" | "phone" | "name" | "password"
-  >("email");
+  const [typeUser, setTypeUser] = useState<"email" | "phone">("email");
   const [isVisiblePopup, setIsVisiblePopup] = useState(false);
   const [currentStep, setCurrentStep] = useState<Step>("input");
   const [userIdentifier, setUserIdentifier] = useState("");
 
   const dispatch = useAppDispatch();
-  const {
-    loading,
-    error: authError,
-    isAuthenticated,
-  } = useAppSelector((state: RootState) => state.auth);
+  const router = useRouter();
 
-  useEffect(() => {
-    async function prepare() {
-      if (fontsLoaded) {
-        await SplashScreen.hideAsync();
-      }
+  const { loading, error: authError, isAuthenticated, user } = useAppSelector(
+    (state: RootState) => state.auth
+  );
+
+  const prepareApp = useCallback(async () => {
+    if (fontsLoaded) {
+      await SplashScreen.hideAsync();
     }
-    prepare();
   }, [fontsLoaded]);
 
   useEffect(() => {
-    const handleLogin = async (data: any) => {
-      const response = await dispatch(login(data));
-      console.log("login response", response);
-      if (response.type === "auth/login/fulfilled") {
-        console.log("login fulfilled");
-        // router.push(`${API_URL_LOCAL}/profile`);
+    prepareApp();
+  }, [prepareApp]);
+
+  const handleGetUser = useCallback(async () => {
+    try {
+      const response = await dispatch(getUser());
+      if (response.type === "user/me/fulfilled") {
+        console.log("User retrieved:", response.payload);
       }
-    };
-    if (isConfirmButtonPressed) {
-      let isValid = true;
-
-      if (currentStep === "input") {
-        if (typeUser === "email") {
-          const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-          if (!emailRegex.test(userIdentifier)) {
-            setError("Email không hợp lệ");
-            isValid = false;
-          }
-        }
-
-        if (typeUser === "phone") {
-          const phoneRegex = /^[0-9]{10}$/;
-          if (!phoneRegex.test(userIdentifier)) {
-            setError("Số điện thoại không hợp lệ");
-            isValid = false;
-          }
-        }
-
-        if (isValid) {
-          setError("");
-          setCurrentStep("password");
-          setButtonActive(false);
-        }
-      } else if (currentStep === "password") {
-        if (password.length < 8) {
-          setError("Mật khẩu phải có ít nhất 8 ký tự");
-          isValid = false;
-        }
-
-        if (isValid) {
-          const data = {
-            account: userIdentifier,
-            password: password,
-          };
-          handleLogin(data);
-          
-          setError("");
-          setUserIdentifier("");
-          setPassword("");
-          setButtonActive(false);
-        }
-      }
-
-      setIsConfirmButtonPressed(false);
+    } catch (e) {
+      console.log("Failed to fetch user", e);
     }
-  }, [isConfirmButtonPressed, password, typeUser, currentStep, userIdentifier]);
+  }, [dispatch]);
+
+  const handleLogin = useCallback(
+    async (data: { account: string; password: string }) => {
+      const response = await dispatch(login(data));
+      if (response.type === "auth/login/fulfilled") {
+        console.log("Login thành công");
+      }
+    },
+    [dispatch]
+  );
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      handleGetUser();
+    }
+  }, [isAuthenticated, handleGetUser]);
+
+  useEffect(() => {
+    const checkPersistedStorage = async () => {
+      const data = await AsyncStorage.getItem("persist:root");
+      console.log("AsyncStorage:", data);
+    };
+    checkPersistedStorage();
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      router.push(`${LOCAL_URL}/profile`);
+    }
+  }, [user, router]);
 
   useEffect(() => {
     if (authError) {
@@ -115,47 +99,70 @@ export default function SignInScreen() {
   }, [authError, dispatch]);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      router.push(`/profile`);
-    }
-  }, [isAuthenticated]);
+    if (!isConfirmButtonPressed) return;
 
-  if (!fontsLoaded) return null;
+    let isValid = true;
+
+    if (currentStep === "input") {
+      if (typeUser === "email") {
+        const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
+        if (!emailRegex.test(userIdentifier)) {
+          setError("Email không hợp lệ");
+          isValid = false;
+        }
+      } else {
+        const phoneRegex = /^[0-9]{10}$/;
+        if (!phoneRegex.test(userIdentifier)) {
+          setError("Số điện thoại không hợp lệ");
+          isValid = false;
+        }
+      }
+
+      if (isValid) {
+        setError("");
+        setCurrentStep("password");
+        setButtonActive(false);
+      }
+    } else if (currentStep === "password") {
+      if (password.length < 8) {
+        setError("Mật khẩu phải có ít nhất 8 ký tự");
+        isValid = false;
+      }
+
+      if (isValid) {
+        handleLogin({ account: userIdentifier, password });
+        setError("");
+        setUserIdentifier("");
+        setPassword("");
+        setButtonActive(false);
+      }
+    }
+
+    setIsConfirmButtonPressed(false);
+  }, [isConfirmButtonPressed, currentStep, userIdentifier, password, typeUser, handleLogin]);
+
+  if (!fontsLoaded || loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
 
   return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: "#272727",
-      }}
-    >
+    <View style={styles.container}>
       <ReturnButton
         onPress={() => {
           if (currentStep === "password") {
             setCurrentStep("input");
             setButtonActive(userIdentifier.length > 0);
-            setTypeUser(typeUser === "email" ? "email" : "phone");
             setError("");
-            setIsVisiblePopup(false);
-            setIsConfirmButtonPressed(false);
           } else {
-            console.log("return to onboarding");
-            router.push(`${API_URL_LOCAL}/onboarding`);
+            router.push(`${LOCAL_URL}/onboarding`);
           }
         }}
       />
-
-      <View
-        style={{
-          flex: 1,
-          gap: 10,
-          justifyContent: "center",
-          alignItems: "center",
-          ...(isVisiblePopup && { pointerEvents: "none" }),
-        }}
-      >
+      <View style={styles.contentContainer}>
         <Title
           text={
             currentStep === "input"
@@ -182,31 +189,23 @@ export default function SignInScreen() {
           />
           {error ? <Text style={styles.error}>{error}</Text> : null}
         </View>
-        {currentStep === "input" && (
+
+        {currentStep === "input" ? (
           <SubButton
             text={`Sử dụng ${typeUser === "email" ? "SĐT" : "email"}`}
             setTypeUser={setTypeUser}
             type={typeUser}
           />
-        )}
-        {currentStep === "password" && (
+        ) : (
           <SubButton
-            text={`Quên mật khẩu`}
+            text="Quên mật khẩu"
             setTypeUser={() => {}}
             type={typeUser}
           />
         )}
       </View>
 
-      <View
-        style={{
-          width: "100%",
-          gap: 20,
-          marginBottom: 36,
-          alignItems: "center",
-          ...(isVisiblePopup && { pointerEvents: "none" }),
-        }}
-      >
+      <View style={styles.bottomContainer}>
         <Privacy />
         <ConfirmButton
           setIsConfirmButtonPressed={setIsConfirmButtonPressed}
@@ -215,42 +214,59 @@ export default function SignInScreen() {
       </View>
 
       {isVisiblePopup && (
-        <View
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(135, 135, 135, 0.18)",
-            zIndex: 10,
-          }}
-          pointerEvents="auto"
-        />
-      )}
-
-      {isVisiblePopup && (
-        <AuthPopup
-          title={`Lỗi đăng nhập`}
-          description={`Thông tin tài khoản hoặc mật khẩu không chính xác`}
-          setIsVisiblePopup={setIsVisiblePopup}
-        />
+        <View style={styles.overlay}>
+          <AuthPopup
+            title="Lỗi đăng nhập"
+            description="Thông tin tài khoản hoặc mật khẩu không chính xác"
+            setIsVisiblePopup={setIsVisiblePopup}
+          />
+        </View>
       )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+    alignItems: "center",
+  },
+  contentContainer: {
+    flex: 1,
+    gap: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   errorContainer: {
     height: 100,
     justifyContent: "center",
     alignItems: "center",
   },
   error: {
-    position: "absolute",
-    bottom: -2,
-    color: "#FF6B6B",
+    color: colors._error,
     fontSize: 12,
     fontFamily: "Rounded Mplus 1c Bold",
+    marginTop: 5,
+  },
+  bottomContainer: {
+    width: "100%",
+    gap: 20,
+    marginBottom: 36,
+    alignItems: "center",
+  },
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(135, 135, 135, 0.18)",
+    zIndex: 10,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
