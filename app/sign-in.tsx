@@ -31,6 +31,7 @@ export default function SignInScreen() {
   const [isVisiblePopup, setIsVisiblePopup] = useState(false);
   const [currentStep, setCurrentStep] = useState<Step>("input");
   const [userIdentifier, setUserIdentifier] = useState("");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -65,6 +66,7 @@ export default function SignInScreen() {
       const response = await dispatch(login(data));
       if (response.type === "auth/login/fulfilled") {
         console.log("Login thành công");
+        setIsLoggedIn(true);
       }
     },
     [dispatch]
@@ -130,7 +132,10 @@ export default function SignInScreen() {
       }
 
       if (isValid) {
-        handleLogin({ account: userIdentifier, password });
+        console.log("userIdentifier", userIdentifier);
+        console.log("password", password);
+        
+        handleLogin({ account: typeUser === "email" ? userIdentifier : "+84" + userIdentifier.slice(1), password });
         setError("");
         setUserIdentifier("");
         setPassword("");
@@ -141,7 +146,7 @@ export default function SignInScreen() {
     setIsConfirmButtonPressed(false);
   }, [isConfirmButtonPressed, currentStep, userIdentifier, password, typeUser, handleLogin]);
 
-  if (!fontsLoaded || loading) {
+  if (!fontsLoaded || loading || isLoggedIn) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" />

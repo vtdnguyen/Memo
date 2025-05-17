@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { RootState } from '../store';
+// import CookieManager from '@react-native-cookies/cookies';
 
 export const API_URL = 'https://memo-app-be.onrender.com';
 export const LOCAL_URL = 'http://localhost:8081';
@@ -44,6 +45,46 @@ export const getUser = createAsyncThunk(
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Lấy thông tin người dùng thất bại');
+    }
+  }
+);
+
+export const uploadAvatar = createAsyncThunk(
+  'user/avatar',
+  async (formData: FormData, { rejectWithValue, getState }) => {
+    // const cookies = await CookieManager.get(API_URL);
+    // const cookieStr = Object.entries(cookies)
+    //   .map(([k, v]) => `${k}=${v.value}`)
+    //   .join('; ');
+
+    try {
+      const response = await axios.post(
+        `${API_URL}/user/avatar`, 
+        formData, 
+        { 
+          withCredentials: true,
+          //headers: { Cookie: cookieStr }
+        }
+      );
+      return response.data;
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error) && error.response?.data) {
+        const apiError = error.response.data;
+        return rejectWithValue(apiError.message || 'Upload avatar thất bại');
+      }
+      return rejectWithValue('Upload avatar thất bại');
+    }
+  } 
+);
+
+export const getCookie = createAsyncThunk(
+  'auth/refreshToken',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`${API_URL}/auth/refresh`,  { withCredentials: true, });
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Lấy cookie thất bại');
     }
   }
 );
@@ -143,6 +184,30 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
+      // Upload avatar
+      .addCase(uploadAvatar.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(uploadAvatar.fulfilled, (state, action) => {
+        state.loading = false;
+        console.log("upload avatar fulfilled", action.payload);
+        if (state.user) {
+          state.user.avatar.url = action.payload.avatarUrl;
+        }
+      })
+      .addCase(uploadAvatar.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      // Get cookie
+      .addCase(getCookie.fulfilled, (state, action) => {
+        state.token = action.payload.accessTokenCookie.token;
+      })
+      .addCase(getCookie.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
       // Login
       .addCase(login.pending, (state) => {
         state.loading = true;
@@ -168,7 +233,7 @@ const authSlice = createSlice({
       .addCase(signup.fulfilled, (state, action) => {
         state.loading = false;
         console.log("signup fulfilled", action.payload);
-        state.user = action.payload;
+        // state.user = action.payload; // use to skip user interaction
       })
       .addCase(signup.rejected, (state, action) => {
         state.loading = false;

@@ -24,6 +24,7 @@ import { signup, clearError, LOCAL_URL } from "@/src/redux/slices/authSlice";
 import { RootState } from "@/src/redux/store";
 import { router } from "expo-router";
 import { colors } from "@/constants/Colors";
+import { defaultAvatar } from "@/constants/images";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -45,7 +46,7 @@ export default function SignUpScreen() {
   const [lastName, setLastName] = useState("");
   const [username, setUsername] = useState("");
   const [copiedLink, setCopiedLink] = useState(false);
-  const [defaultProfilePicture, setDefaultProfilePicture] = useState("https://cdn-icons-png.flaticon.com/128/149/149071.png");
+  const { avatarUrl } = defaultAvatar;
 
   const dispatch = useAppDispatch();
   const {
@@ -334,7 +335,7 @@ export default function SignUpScreen() {
               >
                 <UserTab
                   username={user?.username || ""}
-                  image={defaultProfilePicture}
+                  image={avatarUrl}
                 />
 
                 <Text style={styles.successText}>Thành công</Text>

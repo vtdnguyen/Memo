@@ -22,7 +22,7 @@ export const colors =
     background: '#272727',
     outline: '#C8A673',
     textCol: 'rgba(255, 255, 255, 0.7)',
-    bg: 'rgba(255, 255, 255, 0.1)'
+    bg: 'rgba(255, 255, 255, 0.1)',
 
     _error: '#FF6B6B',
     _background: '#1f1f1f',
@@ -38,6 +38,13 @@ export const colors =
     _privacyPolicyText: '#979797',
     _borderAvatar: '#3A3A3A',
     _subject: '#787878',
+    _editButton: '#454545',
+    _usernameText: '#D3D3D3',
+    _name: '#B3B3B3',
+    _editButtonBorder: '#696969',
+    _functionName: '#ECECEC',
+    _functionContainer: '#595959',
+    _deleteAccount: '#CD3B3B'
 
   }
 

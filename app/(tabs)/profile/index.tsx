@@ -1,54 +1,37 @@
+import { colors } from "@/constants/Colors";
+import AddFriend from "@/src/components/profile/addFriend";
+import Subject from "@/src/components/profile/subject";
+import Avatar from "@/src/components/profile/avatar";
 import { useAppDispatch, useAppSelector } from "@/src/redux/hooks";
 import { logout } from "@/src/redux/slices/authSlice";
 import { RootState } from "@/src/redux/store";
 import { useEffect } from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Dimensions } from "react-native";
+import { Mail, User, Send, CircleAlert, LogOut, Trash2, TriangleAlert } from 'lucide-react-native'
+import ProfileFunction from "@/src/components/profile/profileFunction";
+
 export default function ProfileScreen() {
-  const { user, } = useAppSelector((state: RootState) => state.auth);
-  const dispatch = useAppDispatch();
-  console.log("user", user);
+  const { height } = Dimensions.get('window');
+  const screenHeight = height - 0.1*height;
   
-  const mockUser = {
-    name: "Khoa Tran",
-    email: "khoa.tran@hcmut.edu.vn",
-    avatar: "https://img.buzzfeed.com/buzzfeed-static/static/2024-03/24/21/asset/9e808538e358/sub-buzz-4047-1711315359-1.png?downsize=900:*&output-format=auto&output-quality=auto",
-    followers: 120,
-    following: 75,
-    posts: 34,
-  };
-
-
-
   return (
-    <View style={styles.container}>
-      <View style={styles.profileHeader}>
-        <Image source={{ uri: mockUser.avatar }} style={styles.avatar} />
-        <Text style={styles.name}>{user?.firstName} {user?.lastName}</Text>
-        <Text style={styles.email}>{user?.email}</Text>
-      </View>
-
-      <View style={styles.statsContainer}>
-        <View style={styles.statBox}>
-          <Text style={styles.statNumber}>{mockUser.posts}</Text>
-          <Text style={styles.statLabel}>Bài viết</Text>
+    <View style={{flex: 1}}>
+      <ScrollView style={[styles.container, {maxHeight: screenHeight}]} showsVerticalScrollIndicator={false} >
+          <Avatar />
+        <AddFriend />
+        <View style={styles.subjectContainer}>
+          <Subject subject="Tổng quát" icon={<User color={colors.white} size={28} />} />
+          <ProfileFunction functionName="Thay đổi địa chỉ email" icon={<Mail color={colors.white} size={28} />} position="top" />
+          <ProfileFunction functionName="Đề xuất" icon={<Send color={colors.white} size={28} />} position="middle" />
+          <ProfileFunction functionName="Báo cáo vấn đề" icon={<CircleAlert color={colors.white} size={28} />} position="bottom" />
         </View>
-        <View style={styles.statBox}>
-          <Text style={styles.statNumber}>{mockUser.followers}</Text>
-          <Text style={styles.statLabel}>Người theo dõi</Text>
+        <View style={styles.subjectContainer}>
+          <Subject subject="Thoát" icon={<TriangleAlert color={colors.white} size={28} />} />
+          <ProfileFunction functionName="Đăng xuất" icon={<LogOut color={colors.white} size={28} />} position="top" />
+          <ProfileFunction functionName="Xóa tài khoản" icon={<Trash2 color={colors._deleteAccount} size={28} />} position="bottom" />
         </View>
-        <View style={styles.statBox}>
-          <Text style={styles.statNumber}>{mockUser.following}</Text>
-          <Text style={styles.statLabel}>Đang theo dõi</Text>
-        </View>
-      </View>
-
-      <View style={styles.buttonsContainer}>
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Chỉnh sửa hồ sơ</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.button, styles.logoutButton]} onPress={() => dispatch(logout())}>
-          <Text style={styles.buttonText}>Đăng xuất</Text>
-        </TouchableOpacity>
+      </ScrollView>
+      <View style={{height: height - screenHeight, backgroundColor: colors.background}}>
       </View>
     </View>
   );
@@ -56,65 +39,15 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: colors.background,
     padding: 20,
-    alignItems: "center",
   },
-  profileHeader: {
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 999,
-    marginBottom: 10,
-  },
-  name: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  email: {
-    fontSize: 14,
-    color: "#777",
-  },
-  statsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-    marginVertical: 20,
-  },
-  statBox: {
-    alignItems: "center",
-    flex: 1,
-  },
-  statNumber: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  statLabel: {
-    fontSize: 12,
-    color: "#888",
-  },
-  buttonsContainer: {
-    width: "100%",
-    gap: 12,
-    marginTop: 20,
-  },
-  button: {
-    backgroundColor: "#1E90FF",
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  logoutButton: {
-    backgroundColor: "#FF3B30",
-  },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "600",
-  },
+  subjectContainer: {
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    justifyContent: 'flex-start',
+    gap: 10,
+  }
 });
