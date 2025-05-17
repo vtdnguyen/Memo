@@ -1,4 +1,4 @@
-import React, { useState, useRef, useContext } from 'react';
+import React, { useState, useRef, useContext, useCallback } from 'react';
 import {
   StyleSheet,
   View,
@@ -126,6 +126,7 @@ export default function ExploreScreen(): React.JSX.Element {
       {item.hashtag && (<Text style={styles.title}>{item.hashtag}</Text>)}
     </View>
   );
+
 
   return (
     <View style={[styles.container, ]}>

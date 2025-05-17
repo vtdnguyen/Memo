@@ -1,3 +1,4 @@
+import { colors } from '@/constants/Colors';
 import { useState } from 'react';
 import { View, Text, StyleSheet, Button } from 'react-native';
 
@@ -31,7 +32,7 @@ const styles = StyleSheet.create({
           { translateX: -165 },
           { translateY: -75 }
         ],
-        backgroundColor: '#D9D9D9',
+        backgroundColor: colors._popup,
         borderRadius: 3,
         display: 'flex',
         flexDirection: 'column',
@@ -55,7 +56,7 @@ const styles = StyleSheet.create({
         fontStyle: 'normal',
         lineHeight: 28,
         letterSpacing: -0.5,
-        color: '#000000',
+        color: colors.black,
         display: 'flex',
         alignItems: 'center',
     },
@@ -68,7 +69,7 @@ const styles = StyleSheet.create({
         fontWeight: '300',
         lineHeight: 20,
         letterSpacing: -0.5,
-        color: '#000000',
+        color: colors.black,
     },
     button: {
         borderRadius: 5,
@@ -77,7 +78,7 @@ const styles = StyleSheet.create({
         textAlign: 'right',
         fontFamily: 'Poppins',
         fontStyle: 'normal',
-        color: '#000000',
+        color: colors.black,
         display: 'flex',
         alignItems: 'center',
         letterSpacing: -0.5,

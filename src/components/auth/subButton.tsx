@@ -3,11 +3,12 @@ import { Text,TouchableOpacity, StyleSheet, Alert } from "react-native";
 import { View } from "react-native";
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useAppSelector } from "@/src/redux/hooks";
+import { colors } from "@/constants/Colors";
 
 interface SubButtonProps {  
     text: string;
-    setTypeUser: (type: 'email' | 'phone' | 'name' | 'password') => void;
-    type: 'email' | 'phone' | 'name' | 'password';
+    setTypeUser: (type: 'email' | 'phone') => void;
+    type: 'email' | 'phone' | 'password' | 'name';
     setCopiedLink?: (copiedLink: boolean) => void;
 }
 
@@ -50,7 +51,7 @@ export default function SubButton({ text, setTypeUser, type, setCopiedLink }: Su
 const styles = StyleSheet.create({
     container: {
         width: "100%",
-        backgroundColor: "#454343",
+        backgroundColor: colors._input,
         borderRadius: 99,
         height: 52,
         justifyContent: "center",
@@ -70,7 +71,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         textAlign: "center",
         letterSpacing: -0.5,
-        color: "#FFFFFF",
+        color: colors.white,
     },
     sended: {
         height: 52,
@@ -83,7 +84,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         textAlign: "center",
         letterSpacing: -0.5,
-        color: "#848080",
+        color: colors._promptPassword,
     }
 })
 

@@ -21,7 +21,23 @@ export const colors =
     yellow: '#FFCC00',
     background: '#272727',
     outline: '#C8A673',
-    textCol: 'rgba(255, 255, 255, 0.7)'
+    textCol: 'rgba(255, 255, 255, 0.7)',
+
+    _error: '#FF6B6B',
+    _background: '#1f1f1f',
+    _copied: '#DDDDDD',
+    _promptPassword: '#848080',
+    _promptPasswordNotice: '#F58F0A',
+    _icon: '#AFACAC',
+    _input: '#454343',
+    _popup: '#D9D9D9',
+    _confirmButton: '#FFC877',
+    _overlay: 'rgba(135, 135, 135, 0.18)',
+    _privacyPolicy: '#454343',
+    _privacyPolicyText: '#979797',
+    _borderAvatar: '#3A3A3A',
+    _subject: '#787878',
+
   }
 
 

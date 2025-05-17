@@ -1,3 +1,10 @@
+interface Avatar {
+    id: string;
+    url: string;
+    name: string;
+    format: string;
+    key: string;
+}
 
 interface User {
     avatarId: string | null;
@@ -7,6 +14,7 @@ interface User {
     lastName: string;
     phoneNumber: string | null;
     username: string;
+    avatar: Avatar;
 }
 
 interface AuthState {

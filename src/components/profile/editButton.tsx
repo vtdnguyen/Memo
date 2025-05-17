@@ -1,3 +1,4 @@
+import { colors } from "@/constants/Colors";
 import { View, Text, StyleSheet } from "react-native";
 
 export default function EditButton() {
@@ -10,7 +11,7 @@ export default function EditButton() {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#3A3A3A',
+    backgroundColor: colors._borderAvatar,
     borderRadius: 20,
   },
   text: {
@@ -18,7 +19,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 26,
     textAlign: 'center',
-    color: '#D9D9D9',
+    color: colors._popup,
   },
 });
 

@@ -1,45 +1,53 @@
-import React, { useContext, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, StatusBar, Image } from 'react-native';
-import { Feather, Ionicons } from '@expo/vector-icons';
-import { router, useNavigation } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Friend } from './types';
-import { TabBarContext } from '../_layout';
-import { colors } from '@/constants/Colors';
+import React, { useContext, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  StatusBar,
+  Image,
+} from "react-native";
+import { Feather, Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Friend } from "@/src/types/message";
+import { TabBarContext } from "../_layout";
+import { colors } from "@/constants/Colors";
 
 // Mock data for friends with messages
 const mockFriends: Friend[] = [
   {
-    id: '1',
-    name: 'Sarah Johnson',
-    avatar: 'https://randomuser.me/api/portraits/women/1.jpg',
+    id: "1",
+    name: "Sarah Johnson",
+    avatar: "https://randomuser.me/api/portraits/women/1.jpg",
     unreadCount: 2,
   },
   {
-    id: '2',
-    name: 'Mike Chen',
-    avatar: 'https://randomuser.me/api/portraits/men/1.jpg',
+    id: "2",
+    name: "Mike Chen",
+    avatar: "https://randomuser.me/api/portraits/men/1.jpg",
     unreadCount: 0,
   },
   {
-    id: '3',
-    name: 'Emma Wilson',
-    avatar: 'https://randomuser.me/api/portraits/women/2.jpg',
+    id: "3",
+    name: "Emma Wilson",
+    avatar: "https://randomuser.me/api/portraits/women/2.jpg",
     unreadCount: 1,
   },
   {
-    id: '4',
-    name: 'Alex Rodriguez',
-    avatar: 'https://randomuser.me/api/portraits/men/2.jpg',
+    id: "4",
+    name: "Alex Rodriguez",
+    avatar: "https://randomuser.me/api/portraits/men/2.jpg",
     unreadCount: 0,
   },
   {
-    id: '5',
-    name: 'Lisa Taylor',
-    avatar: 'https://randomuser.me/api/portraits/women/3.jpg',
+    id: "5",
+    name: "Lisa Taylor",
+    avatar: "https://randomuser.me/api/portraits/women/3.jpg",
     unreadCount: 3,
   },
-]
+];
 
 export default function MessageScreen() {
   const insets = useSafeAreaInsets();
@@ -48,8 +56,8 @@ export default function MessageScreen() {
   const handleFriendPress = (friend: Friend) => {
     // Navigate to chat room with this friend
     router.push({
-      pathname: '/(tabs)/(message)/[id]',
-      params: { id: friend.id, name: friend.name, avatar: friend.avatar }
+      pathname: "/(tabs)/(message)/[id]",
+      params: { id: friend.id, name: friend.name, avatar: friend.avatar },
     });
   };
 
@@ -59,12 +67,12 @@ export default function MessageScreen() {
   };
 
   const renderFriendItem = ({ item }: { item: Friend }) => (
-    <TouchableOpacity 
-      style={styles.friendItem} 
+    <TouchableOpacity
+      style={styles.friendItem}
       onPress={() => handleFriendPress(item)}
     >
       <View style={styles.avatarContainer}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.friendContainer}
           activeOpacity={0.8} // Improved tactile feedback
         >
@@ -73,22 +81,19 @@ export default function MessageScreen() {
               styles.avatarRing,
               item.unreadCount > 0
                 ? { borderColor: colors.primary }
-                : { borderColor: '#888888' }
+                : { borderColor: "#888888" },
             ]}
           >
-            <Image 
-              source={{ uri: item.avatar }}
-              style={styles.avatar}
-            />
+            <Image source={{ uri: item.avatar }} style={styles.avatar} />
           </View>
         </TouchableOpacity>
       </View>
-      
+
       <View style={styles.messageInfo}>
         <View style={styles.nameTimeRow}>
           <Text style={styles.friendName}>{item.name}</Text>
           <TouchableOpacity>
-            <Feather name='chevron-right' size={28} color={colors.textCol}/>
+            <Feather name="chevron-right" size={28} color={colors.textCol} />
           </TouchableOpacity>
         </View>
       </View>
@@ -98,10 +103,10 @@ export default function MessageScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <StatusBar barStyle="dark-content" />
-      
+
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.textCol}/>
+          <Ionicons name="arrow-back" size={24} color={colors.textCol} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Tin nhắn</Text>
         <View style={styles.headerRight} />
@@ -124,20 +129,19 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingVertical: 15,
     paddingHorizontal: 16,
   },
   headerTitle: {
     fontSize: 22,
-    fontWeight: '600',
-    color: colors.textCol
+    fontWeight: "600",
+    color: colors.textCol,
   },
   backButton: {
     padding: 5,
-    
   },
   headerRight: {
     width: 24, // To balance the header
@@ -146,14 +150,14 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   friendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical:18,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 18,
     paddingHorizontal: 16,
     marginBottom: 1,
   },
   avatarContainer: {
-    position: 'relative',
+    position: "relative",
   },
   avatar: {
     width: 40,
@@ -162,53 +166,53 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#555',
+    fontWeight: "bold",
+    color: "#555",
   },
   unreadText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   messageInfo: {
     flex: 1,
   },
   nameTimeRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 4,
   },
   friendContainer: {
     marginRight: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   friendName: {
     fontSize: 16,
-    fontWeight: '600',
-    color: colors.textCol
+    fontWeight: "600",
+    color: colors.textCol,
   },
   avatarRing: {
     width: 50,
     height: 50,
     borderRadius: 25,
     padding: 3,
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     borderWidth: 2,
-    borderColor: '#888888',
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderColor: "#888888",
+    justifyContent: "center",
+    alignItems: "center",
   },
   timeText: {
     fontSize: 12,
-    color: '#888',
+    color: "#888",
   },
   lastMessage: {
     fontSize: 14,
-    color: '#888',
+    color: "#888",
   },
   unreadMessage: {
-    color: '#000',
-    fontWeight: '500',
+    color: "#000",
+    fontWeight: "500",
   },
 });

@@ -1,10 +1,10 @@
-import { Redirect, Tabs } from 'expo-router';
-import { View, StatusBar, Text, Keyboard } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { TabBar } from '@/src/components/TabBar/TabBar';
-import { useAuth } from '@/src/context/AuthContext';
-import { createContext, useState, useEffect, useCallback } from 'react';
-import { useAppSelector } from '@/src/redux/hooks';
+import { Redirect, Tabs } from "expo-router";
+import { View, Text, Keyboard, ActivityIndicator } from "react-native";
+import { TabBar } from "@/src/components/TabBar/TabBar";
+import { createContext, useState, useEffect, useCallback } from "react";
+import { useAppSelector } from "@/src/redux/hooks";
+import { colors } from "@/constants/Colors";
+
 interface TabBarContextType {
   showTabBar: () => void;
   hideTabBar: () => void;
@@ -18,19 +18,15 @@ export const TabBarContext = createContext<TabBarContextType>({
 });
 
 export default function TabLayout() {
-  const authContext = useAuth();
-  const authState = authContext?.authState;
-  const isFirstTimeUser = useAppSelector(state => state.auth.isFirstTimeUser);
-  const isAuthenticated = useAppSelector(state => state.auth.isAuthenticated);
-  const loading = useAppSelector(state => state.auth.loading);
+  const { isFirstTimeUser, isAuthenticated, user, loading } = useAppSelector((state) => state.auth);
   const [tabBarVisible, setTabBarVisible] = useState<boolean>(true);
 
   // Handle keyboard visibility
   useEffect(() => {
-    const showSubscription = Keyboard.addListener('keyboardDidShow', () => {
+    const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
       setTabBarVisible(false);
     });
-    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+    const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
       setTabBarVisible(true);
     });
 
@@ -55,26 +51,57 @@ export default function TabLayout() {
   };
 
   if (loading) {
-    return <Text style={{ fontSize: 100 }}>Loading...</Text>;
+    return <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <ActivityIndicator size="large" color={colors.primary} />
+    </View>
   }
-  console.log("isAuthenticated", isAuthenticated);
-  
+
   if (!isAuthenticated) {
     if (isFirstTimeUser) {
-      return <Redirect href={'/onboarding'} />;
+      return <Redirect href={"/onboarding"} />;
     } else {
-      return <Redirect href={'/sign-in'} />;
+      return <Redirect href={"/sign-in"} />;
     }
   }
 
   return (
     <TabBarContext.Provider value={tabBarContextValue}>
       <View style={{ flex: 1 }}>
-        <Tabs tabBar={(props) => <TabBar {...props} visible={tabBarVisible} />}>
-          <Tabs.Screen name="explore" options={{ title: 'Explore', tabBarLabel: 'Explore', headerShown: false }} />
-          <Tabs.Screen name="home" options={{ title: 'Home', tabBarLabel: 'Home', headerShown: false }} />
-          <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarLabel: 'Profile', headerShown: false }} />
-          <Tabs.Screen name="message" options={{ title: 'Message', tabBarLabel: 'Message', headerShown: false }} />
+        <Tabs
+          screenOptions={{
+            headerShown: false,
+            tabBarStyle: { display: "none" },
+          }}
+          tabBar={(props) => <TabBar {...props} visible={tabBarVisible} />}
+        >
+          <Tabs.Screen
+            name="explore"
+            options={{
+              title: "Explore",
+              tabBarLabel: "Explore",
+            }}
+          />
+          <Tabs.Screen
+            name="home"
+            options={{
+              title: "Home",
+              tabBarLabel: "Home",
+            }}
+          />
+          <Tabs.Screen
+            name="profile"
+            options={{
+              title: "Profile",
+              tabBarLabel: "Profile",
+            }}
+          />
+          <Tabs.Screen
+            name="message"
+            options={{
+              title: "Message",
+              tabBarLabel: "Message",
+            }}
+          />
         </Tabs>
       </View>
     </TabBarContext.Provider>

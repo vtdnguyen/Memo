@@ -1,3 +1,4 @@
+import { colors } from '@/constants/Colors';
 import { View, Text, Image, StyleSheet } from 'react-native';
 
 interface SubjectProps {
@@ -25,7 +26,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 999,
-    backgroundColor: '#787878',
+    backgroundColor: colors._subject,
   },
   text: {
     fontFamily: 'Open Sans',
@@ -33,7 +34,7 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     textAlign: 'center',
     letterSpacing: 0.75,
-    color: '#FFFFFF',
+    color: colors.white,
   },
 });
 

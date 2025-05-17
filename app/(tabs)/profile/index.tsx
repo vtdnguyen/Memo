@@ -1,6 +1,14 @@
+import { useAppDispatch, useAppSelector } from "@/src/redux/hooks";
+import { logout } from "@/src/redux/slices/authSlice";
+import { RootState } from "@/src/redux/store";
+import { useEffect } from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 export default function ProfileScreen() {
-  const user = {
+  const { user, } = useAppSelector((state: RootState) => state.auth);
+  const dispatch = useAppDispatch();
+  console.log("user", user);
+  
+  const mockUser = {
     name: "Khoa Tran",
     email: "khoa.tran@hcmut.edu.vn",
     avatar: "https://img.buzzfeed.com/buzzfeed-static/static/2024-03/24/21/asset/9e808538e358/sub-buzz-4047-1711315359-1.png?downsize=900:*&output-format=auto&output-quality=auto",
@@ -9,27 +17,27 @@ export default function ProfileScreen() {
     posts: 34,
   };
 
-  
+
 
   return (
     <View style={styles.container}>
       <View style={styles.profileHeader}>
-        <Image source={{ uri: user.avatar }} style={styles.avatar} />
-        <Text style={styles.name}>{user.name}</Text>
-        <Text style={styles.email}>{user.email}</Text>
+        <Image source={{ uri: mockUser.avatar }} style={styles.avatar} />
+        <Text style={styles.name}>{user?.firstName} {user?.lastName}</Text>
+        <Text style={styles.email}>{user?.email}</Text>
       </View>
 
       <View style={styles.statsContainer}>
         <View style={styles.statBox}>
-          <Text style={styles.statNumber}>{user.posts}</Text>
+          <Text style={styles.statNumber}>{mockUser.posts}</Text>
           <Text style={styles.statLabel}>Bài viết</Text>
         </View>
         <View style={styles.statBox}>
-          <Text style={styles.statNumber}>{user.followers}</Text>
+          <Text style={styles.statNumber}>{mockUser.followers}</Text>
           <Text style={styles.statLabel}>Người theo dõi</Text>
         </View>
         <View style={styles.statBox}>
-          <Text style={styles.statNumber}>{user.following}</Text>
+          <Text style={styles.statNumber}>{mockUser.following}</Text>
           <Text style={styles.statLabel}>Đang theo dõi</Text>
         </View>
       </View>
@@ -38,7 +46,7 @@ export default function ProfileScreen() {
         <TouchableOpacity style={styles.button}>
           <Text style={styles.buttonText}>Chỉnh sửa hồ sơ</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.button, styles.logoutButton]}>
+        <TouchableOpacity style={[styles.button, styles.logoutButton]} onPress={() => dispatch(logout())}>
           <Text style={styles.buttonText}>Đăng xuất</Text>
         </TouchableOpacity>
       </View>

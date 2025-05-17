@@ -5,6 +5,7 @@ import {
   Animated,
   Button,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import Title from "@/src/components/auth/title";
 import Privacy from "@/src/components/auth/privacy";
@@ -19,10 +20,10 @@ import AuthPopup from "@/src/components/auth/authPopup";
 import UserTab from "@/src/components/auth/userTab";
 import LoadingIndicator from "@/src/components/auth/loadingIndicator";
 import { useAppDispatch, useAppSelector } from "@/src/redux/hooks";
-import { signup, clearError } from "@/src/redux/slices/authSlice";
+import { signup, clearError, LOCAL_URL } from "@/src/redux/slices/authSlice";
 import { RootState } from "@/src/redux/store";
 import { router } from "expo-router";
-import { API_URL_LOCAL } from "@/src/redux/slices/authSlice";
+import { colors } from "@/constants/Colors";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -34,7 +35,7 @@ export default function SignUpScreen() {
   const [isConfirmButtonPressed, setIsConfirmButtonPressed] = useState(false);
   const [buttonActive, setButtonActive] = useState(false);
   const [typeUser, setTypeUser] = useState<
-    "email" | "phone" | "name" | "password"
+    "email" | "phone"
   >("email");
   const [isVisiblePopup, setIsVisiblePopup] = useState(false);
   const [currentStep, setCurrentStep] = useState<Step>("input");
@@ -169,8 +170,6 @@ export default function SignUpScreen() {
       setError("");
     }
   }, [userIdentifier, password, firstName, lastName]);
-
-  if (!fontsLoaded) return null;
 
   const translateY = useRef(new Animated.Value(100)).current;
   const opacity = useRef(new Animated.Value(0)).current;
@@ -363,12 +362,12 @@ export default function SignUpScreen() {
                 )}
                 <TouchableOpacity
                   style={{
-                    backgroundColor: "#1f1f1f",
+                    backgroundColor: colors._background,
                     padding: 10,
                     borderRadius: 10,
                   }}
                   onPress={() => {
-                    router.push(`${API_URL_LOCAL}/sign-in`);
+                    router.push(`${LOCAL_URL}/sign-in`);
                   }}
                 >
                   <Text
@@ -401,7 +400,7 @@ export default function SignUpScreen() {
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: "#272727",
+        backgroundColor: colors.background,
       }}
     >
       {(currentStep !== "success" || !isAuthenticated) && (
@@ -420,7 +419,7 @@ export default function SignUpScreen() {
               setCurrentStep("input");
             } else {
               console.log("Return onboarding");
-              router.push(`${API_URL_LOCAL}/onboarding`);
+              router.push(`${LOCAL_URL}/onboarding`);
             }
           }}
         />
@@ -496,7 +495,7 @@ const styles = StyleSheet.create({
   error: {
     position: "absolute",
     bottom: 0,
-    color: "#FF6B6B",
+    color: colors._error,
     fontSize: 12,
     fontFamily: "Rounded Mplus 1c Bold",
   },
@@ -505,12 +504,12 @@ const styles = StyleSheet.create({
     fontFamily: "Rounded Mplus 1c Bold",
     textAlign: "center",
     letterSpacing: -0.5,
-    color: "#848080",
+    color: colors._promptPassword,
     marginBottom: 10,
     marginTop: 10,
   },
   promptPasswordNotice: {
-    color: "#F58F0A",
+    color: colors._promptPasswordNotice,
   },
   successText: {
     fontFamily: "Rounded Mplus 1c",
@@ -518,7 +517,7 @@ const styles = StyleSheet.create({
     fontSize: 29,
     lineHeight: 46,
     textAlign: "center",
-    color: "#FFFFFF",
+    color: colors.white,
   },
   findFriendText: {
     fontFamily: "Rounded Mplus 1c",
@@ -526,20 +525,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 26,
     textAlign: "center",
-    color: "rgba(255, 255, 255, 0.4)",
+    color: colors.textCol,
     paddingHorizontal: 37,
   },
   copiedLink: {
     position: "absolute",
     bottom: -100,
     alignSelf: "center",
-    backgroundColor: "#1f1f1f",
+    backgroundColor: colors._background,
     paddingHorizontal: 15,
     paddingVertical: 10,
     borderRadius: 10,
-    shadowColor: "#000",
+    boxShadow: '0px 4px 10px rgba(0,0,0,0.3)',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 5,
   },
@@ -548,7 +546,7 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     fontSize: 16,
     lineHeight: 26,
-    color: "#DDDDDD",
+    color: colors._copied,
     textAlign: "center",
   },
 });

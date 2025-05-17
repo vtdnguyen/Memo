@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, Animated, Easing } from "react-native";
 import { useEffect, useRef } from "react";
+import { colors } from "@/constants/Colors";
 
 export default function LoadingIndicator() {
   const spinValue = useRef(new Animated.Value(0)).current;
@@ -40,12 +41,12 @@ const styles = StyleSheet.create({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#272727',
+    backgroundColor: colors._background,
     zIndex: 100,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(135, 135, 135, 0.18)',
+    backgroundColor: colors._overlay,
     zIndex: 5,
   },
   content: {
@@ -53,12 +54,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 20,
-    backgroundColor: '#1f1f1f',
+    backgroundColor: colors._background,
     padding: 30,
     borderRadius: 20,
-    shadowColor: '#000',
+    boxShadow: '0px 4px 10px rgba(0,0,0,0.3)',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 5,
     zIndex: 10,
@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     borderWidth: 4,
-    borderColor: '#F58F0A',
+    borderColor: colors._promptPasswordNotice,
     borderTopColor: 'transparent',
   },
   text: {
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     fontSize: 18,
     lineHeight: 26,
-    color: '#FFFFFF',
+    color: colors.white,
     textAlign: 'center',
   },
 });
