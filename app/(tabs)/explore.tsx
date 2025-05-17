@@ -16,6 +16,7 @@ import { colors } from '@/constants/Colors';
 import CustomButton from '@/src/components/home/IconButton';
 import { TabBarContext } from './_layout';
 import { router } from 'expo-router';
+import FriendModal from '@/src/components/modal/FriendModal';
 
 // Mock data for posts
 const POSTS = [
@@ -79,7 +80,8 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export default function ExploreScreen(): React.JSX.Element {
   const { hideTabBar, showTabBar } = useContext(TabBarContext);
-  
+
+  const [modalVisible, setModalVisible] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState<number>(3);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const flatListRef = useRef<FlatList>(null);
@@ -127,6 +129,48 @@ export default function ExploreScreen(): React.JSX.Element {
     </View>
   );
 
+  const fetchFriends = async () => {
+    // Simulate network request
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    return [
+      {
+        id: 'friend1',
+        name: 'Jane Smith',
+        avatar: 'https://randomuser.me/api/portraits/women/12.jpg',
+      },
+      {
+        id: 'friend2',
+        name: 'John Doe',
+        avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
+      },
+      {
+        id: 'friend3',
+        name: 'Alex Johnson',
+        avatar: 'https://randomuser.me/api/portraits/women/68.jpg',
+      },
+      {
+        id: 'friend4',
+        name: 'Mike Wilson',
+        avatar: 'https://randomuser.me/api/portraits/men/42.jpg',
+      },
+      {
+        id: 'friend5',
+        name: 'Sarah Parker',
+        avatar: 'https://randomuser.me/api/portraits/women/22.jpg',
+      },
+    ];
+  };
+
+  const fetchUserData = async () => {
+    // Simulate network request
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    return {
+      profileLink: 'https://yourapp.com/profile/user123',
+      userId: 'user123'
+    };
+  };
 
   return (
     <View style={[styles.container, ]}>
@@ -156,31 +200,31 @@ export default function ExploreScreen(): React.JSX.Element {
       {/* Header */}
       <View style={styles.headerLeft}>
         <CustomButton
-          text = {"Friends"}
+          text = {"Bạn bè"}
             textColor={'#dfdfdf'}
-            textStyle={{ fontSize: 16 }}
+            textStyle={{ fontSize: 20 }}
             iconName='user-friends'
             iconType='FontAwesome5'
-            iconSize={20}
+            iconSize={22}
             iconColor= {'#dfdfdf'}
             iconPosition="left"
             backgroundColor={'rgba(255, 255, 255, 0.1)'}
             borderRadius={30}
-            onPress={() => {}}
+            onPress={() => {setModalVisible(true);hideTabBar()}}
             style={{ marginRight: 10, height:50 }}
         />
       </View>
 
       <View style={styles.headerRight}>
-      <TouchableOpacity style={styles.messageButton} onPress={openMessage}>
-          <Ionicons name="chatbubble-outline" size={26} color="#dfdfdf" />
-          {unreadMessages > 0 && (
+        <TouchableOpacity style={styles.messageButton} onPress={openMessage}>
+          <Ionicons name="chatbubble-outline" size={36} color="#dfdfdf" />
+          {/* {unreadMessages > 0 && (
             <View style={styles.badgeContainer}>
               <Text style={styles.badgeText}>
                 {unreadMessages > 9 ? '9+' : unreadMessages}
               </Text>
             </View>
-          )}
+          )} */}
         </TouchableOpacity>
       </View>
       
@@ -195,6 +239,13 @@ export default function ExploreScreen(): React.JSX.Element {
           </View>
         </TouchableOpacity>
       </View>
+
+      <FriendModal
+        visible={modalVisible}
+        onClose={() => {setModalVisible(false);showTabBar()}}
+        fetchUserData={fetchUserData}
+        fetchFriends={fetchFriends}
+      />
     </View>
   );
 }
@@ -228,7 +279,6 @@ const styles = StyleSheet.create({
     width: 50,
     height:50,
     borderRadius: 30,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
   },

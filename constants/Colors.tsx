@@ -22,6 +22,7 @@ export const colors =
     background: '#272727',
     outline: '#C8A673',
     textCol: 'rgba(255, 255, 255, 0.7)',
+    bg: 'rgba(255, 255, 255, 0.1)'
 
     _error: '#FF6B6B',
     _background: '#1f1f1f',

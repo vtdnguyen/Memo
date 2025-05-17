@@ -67,26 +67,7 @@ const COLOR_TIMING_CONFIG = {
 
 export default function ConfigScreen(): React.ReactNode {
   const router = useRouter();
-  const { capturedImage , selectedStatus, selectedHashtag, clearAll} = useImageContext();
-  const [isSending, setIsSending] = useState<boolean>(false); // New state to track send action
-
-  // Use useEffect to handle navigation when capturedImage is not available
-  // Handle navigation when capturedImage is not available on mount
-  useEffect(() => {
-    if (!capturedImage && !isSending) {
-      router.replace('/(tabs)/(home)');
-    }
-  }, [capturedImage, isSending]);
-
-  // Handle send action
-  useEffect(() => {
-    if (isSending) {
-      clearAll(); // Clear context values
-      setIsSending(false);
-      router.navigate('/(tabs)/(home)'); // Navigate to explore
-    }
-  }, [isSending, clearAll]);
-
+  const { capturedImage, selectedStatus, selectedHashtag, clearAll } = useImageContext();
   const insets = useSafeAreaInsets();
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
@@ -94,6 +75,13 @@ export default function ConfigScreen(): React.ReactNode {
   const [groups, setGroups] = useState<Group[]>([]);
   const [everyoneSelected, setEveryoneSelected] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+
+  // Move navigation logic to useEffect - this fixes the setState during render problem
+  useEffect(() => {
+    if (!capturedImage) {
+      router.replace('/(tabs)/(home)');
+    }
+  }, [capturedImage, router]);
 
   // Keep track of previous selections to detect changes
   const prevSelectedFriends = useRef<string[]>([]);
@@ -405,19 +393,41 @@ export default function ConfigScreen(): React.ReactNode {
     }
   };
 
-  const sendPicture = () => {
+  const sendPicture = async () => {
+    const formData = new FormData();
+    console.log('Sending picture');
+    formData.append('title', selectedHashtag as any); // Replace with actual user ID
+    formData.append('file', {
+      uri: capturedImage, // Local file path
+      type: 'image/jpeg', // Adjust based on your image type
+      name: 'photo.jpg', // File name
+    } as any);
+    //formData.append('status', selectedStatus?.name as any);
+    try {
+      const response = await fetch('https://memo-app-be.onrender.com/post', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      const result = await response.json();
+      console.log('Upload info:', result);
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+    }
     // Call API HERE (if needed)
-    setIsSending(true); // Trigger the send action
+      clearAll(); // Clear context values
+      router.navigate('/(tabs)/(home)'); // Navigate
   };
 
-  // Render loading state while sending
-  if (isSending) {
-    return <ActivityIndicator size="large" color={colors.primary} />;
-  }
-
-  // Render loading state if no capturedImage on mount
-  if (!capturedImage) {
-    return <ActivityIndicator size="large" color={colors.primary} />;
+  // Render loading state if data is still loading
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
   }
 
   return (
@@ -429,7 +439,7 @@ export default function ConfigScreen(): React.ReactNode {
           <Ionicons name="arrow-back" size={34} color={colors.primary} />
         </TouchableOpacity>
         <Text style={styles_fix.title}>#{selectedHashtag}</Text>
-        <TouchableOpacity onPress={() => sendPicture()}>
+        <TouchableOpacity onPress={() => {sendPicture()}}>
           <Feather name="send" size={34} color={colors.primary} />
         </TouchableOpacity>
       </View>
@@ -456,54 +466,46 @@ export default function ConfigScreen(): React.ReactNode {
       <View style={styles_fix.chooseSharing}>
         <Text style={styles_fix.shareText}>Chia sẻ với</Text>
         
-        {loading ? (
-          <ActivityIndicator size="large" color={colors.primary} />
-        ) : (
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false} 
-            style={styles_fix.scrollContainer}
-            contentContainerStyle={styles_fix.scrollContent}
-          >
-            {/* Everyone option */}
-            <EveryoneButton 
-              isSelected={everyoneSelected}
-              onPress={toggleEveryoneSelection}
-            />
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false} 
+          style={styles_fix.scrollContainer}
+          contentContainerStyle={styles_fix.scrollContent}
+        >
+          {/* Everyone option */}
+          <EveryoneButton 
+            isSelected={everyoneSelected}
+            onPress={toggleEveryoneSelection}
+          />
 
-            {/* Regular friends */}
-            {friends.map((friend: Friend) => (
-              <FriendItem 
-                key={friend.id}
-                friend={friend}
-                isSelected={selectedFriends.includes(friend.id)}
-                onPress={() => toggleFriendSelection(friend.id)}
-              />
-            ))}
-          </ScrollView>
-        )}
+          {/* Regular friends */}
+          {friends.map((friend: Friend) => (
+            <FriendItem 
+              key={friend.id}
+              friend={friend}
+              isSelected={selectedFriends.includes(friend.id)}
+              onPress={() => toggleFriendSelection(friend.id)}
+            />
+          ))}
+        </ScrollView>
         
         <Text style={styles_fix.shareText}>hoặc nhóm:</Text>
         
-        {loading ? (
-          <ActivityIndicator size="large" color={colors.primary} />
-        ) : (
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false} 
-            style={styles_fix.scrollContainer}
-            contentContainerStyle={styles_fix.scrollContent}
-          >
-            {groups.map((group: Group) => (
-              <GroupItem 
-                key={group.id}
-                group={group}
-                isSelected={selectedGroups.includes(group.id)}
-                onPress={() => toggleGroupSelection(group.id)}
-              />
-            ))}
-          </ScrollView>
-        )}
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false} 
+          style={styles_fix.scrollContainer}
+          contentContainerStyle={styles_fix.scrollContent}
+        >
+          {groups.map((group: Group) => (
+            <GroupItem 
+              key={group.id}
+              group={group}
+              isSelected={selectedGroups.includes(group.id)}
+              onPress={() => toggleGroupSelection(group.id)}
+            />
+          ))}
+        </ScrollView>
       </View>
     </View>
   );
