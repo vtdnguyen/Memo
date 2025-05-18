@@ -8,17 +8,19 @@ interface ProfileFunctionProps {
     functionName: string;
     icon: ReactElement;
     position: 'top' | 'middle' | 'bottom';
+    onPress?: () => void;
 }
 
 
 
-export default function ProfileFunction({ functionName, icon, position }: ProfileFunctionProps) {
+export default function ProfileFunction({ functionName, icon, position, onPress }: ProfileFunctionProps) {
     const borderRadius = position === 'top' ? {borderTopLeftRadius: 20, borderTopRightRadius: 20} : position === 'bottom' ? {borderBottomLeftRadius: 20, borderBottomRightRadius: 20} : {borderRadius: 0};
     const dispatch = useAppDispatch();
     const handleFunction = () => {
         if (functionName === 'Đăng xuất') {
             dispatch(logout());
         }
+        onPress && onPress();
         console.log(functionName);
     }
 

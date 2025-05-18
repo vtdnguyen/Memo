@@ -7,9 +7,9 @@ interface AuthInputProps {
   type: string;
   inputValue: string;
   placeholder?: string;
-  setButtonActive: (isActive: boolean) => void;
+  setButtonActive?: (isActive: boolean) => void;
   setInputValue: (value: string) => void;
-  typeUser: 'email' | 'phone' | 'name' | 'password';
+  typeUser?: 'email' | 'phone';
 }
 
 export default function AuthInput({ type, inputValue, placeholder = "", setButtonActive, setInputValue, typeUser }: AuthInputProps) {
@@ -17,9 +17,9 @@ export default function AuthInput({ type, inputValue, placeholder = "", setButto
 
   const handleChange = (text: string) => {
     if (text.length > 0) {
-      setButtonActive(true);
+      setButtonActive?.(true);
     } else {
-      setButtonActive(false);
+      setButtonActive?.(false);
     }
     setInputValue(text);
   };
@@ -69,9 +69,9 @@ export default function AuthInput({ type, inputValue, placeholder = "", setButto
 export function AreaInput({ type, inputValue, placeholder = "", setButtonActive, setInputValue, typeUser }: AuthInputProps) {
   const handleChange = (text: string) => {
     if (text.length > 0) {
-      setButtonActive(true);
+      setButtonActive?.(true);
     } else {
-      setButtonActive(false);
+      setButtonActive?.(false);
     }
     setInputValue(text);
   };

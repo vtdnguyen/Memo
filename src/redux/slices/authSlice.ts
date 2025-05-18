@@ -13,7 +13,7 @@ const initialState: AuthState = {
   isAuthenticated: false,
   user: null,
   loading: false,
-  error: null
+  error: null,
 };
 
 export const completeOnboarding = createAsyncThunk(
@@ -45,6 +45,20 @@ export const getUser = createAsyncThunk(
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Lấy thông tin người dùng thất bại');
+    }
+  }
+);
+
+export const updateUser = createAsyncThunk(
+  'user/update',
+  async (userData: { email?: string, password?: string, phoneNumber?: string, firstName?: string, lastName?: string }, { rejectWithValue }) => {
+    try {
+      console.log("userData", userData);
+      const response = await axios.put(`${API_URL}/user/me`, userData, { withCredentials: true });
+      console.log("update user response", response);
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Cập nhật thông tin người dùng thất bại');
     }
   }
 );
@@ -184,6 +198,23 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
+      // Update user
+      .addCase(updateUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = {
+          ...state.user,
+          ...action.payload,
+        };
+        console.log("update user fulfilled", action.payload);
+      })
+      .addCase(updateUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
       // Upload avatar
       .addCase(uploadAvatar.pending, (state) => {
         state.loading = true;
@@ -197,14 +228,6 @@ const authSlice = createSlice({
         }
       })
       .addCase(uploadAvatar.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      })
-      // Get cookie
-      .addCase(getCookie.fulfilled, (state, action) => {
-        state.token = action.payload.accessTokenCookie.token;
-      })
-      .addCase(getCookie.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })

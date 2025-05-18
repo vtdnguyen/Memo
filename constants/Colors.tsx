@@ -44,7 +44,13 @@ export const colors =
     _editButtonBorder: '#696969',
     _functionName: '#ECECEC',
     _functionContainer: '#595959',
-    _deleteAccount: '#CD3B3B'
+    _deleteAccount: '#CD3B3B',
+
+    lightGray: '#9E9E9E',
+    divider: '#2A2A2A',
+    cardBackground: '#1E1E1E',
+    success: '#4CAF50',
+    danger: '#F44336',
 
   }
 

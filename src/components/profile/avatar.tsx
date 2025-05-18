@@ -6,7 +6,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { getCookie, uploadAvatar } from "@/src/redux/slices/authSlice";
 
 
-export default function Avatar() {
+export default function Avatar({ onPress }: { onPress: () => void }) {
   
     const user = useAppSelector((state: any) => state.auth.user);
     console.log("user", user);
@@ -102,7 +102,7 @@ export default function Avatar() {
             {user.username}
           </Text>
         </View>
-        <TouchableOpacity style={styles.editButton} onPress={() => handleEdit()} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.editButton} onPress={onPress} activeOpacity={0.8}>
           <Text style={styles.editButtonText}>
             Sửa
           </Text>

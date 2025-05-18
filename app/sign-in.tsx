@@ -40,6 +40,8 @@ export default function SignInScreen() {
     (state: RootState) => state.auth
   );
 
+  
+
   const prepareApp = useCallback(async () => {
     if (fontsLoaded) {
       await SplashScreen.hideAsync();
@@ -85,6 +87,7 @@ export default function SignInScreen() {
     };
     checkPersistedStorage();
   }, []);
+
 
   useEffect(() => {
     if (user) {
