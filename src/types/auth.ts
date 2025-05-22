@@ -6,7 +6,7 @@ interface Avatar {
     key: string;
 }
 
-interface User {
+export interface User {
     avatarId: string | null;
     email: string;
     firstName: string;

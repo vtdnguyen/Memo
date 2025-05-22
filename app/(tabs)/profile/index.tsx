@@ -19,7 +19,7 @@ export default function ProfileScreen() {
   const { height } = Dimensions.get('window');
   const screenHeight = height - 0.1*height;
 
-  const [friendRequestVisible, setFriendRequestVisible] = useState(false);
+  const [friendRequestVisible, setFriendRequestVisible] = useState(true);
   const [changeEmailVisible, setChangeEmailVisible] = useState(false);
   const [changeNameVisible, setChangeNameVisible] = useState(false);
   

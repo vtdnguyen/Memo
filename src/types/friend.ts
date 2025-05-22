@@ -1,0 +1,65 @@
+import { ImageStyle, TextStyle, ViewStyle } from "react-native";
+import { User } from "./auth";
+
+export interface FriendRequest {
+  id: string;
+  sender: User;
+  timeAgo: string;
+}
+
+export type Styles = {
+  safeArea?: ViewStyle;
+  container?: ViewStyle;
+  headerGradient?: ViewStyle;
+  header?: ViewStyle;
+  backButton?: ViewStyle;
+  headerTitle?: TextStyle;
+  headerBadge?: ViewStyle;
+  headerBadgeText?: TextStyle;
+  searchContainer?: ViewStyle;
+  searchBlur?: ViewStyle;
+  searchIcon?: ViewStyle;
+  input?: TextStyle;
+  clearButton?: ViewStyle;
+  tabContainer?: ViewStyle;
+  tab?: ViewStyle;
+  tabText?: TextStyle;
+  activeTabText?: TextStyle;
+  tabIndicator?: ViewStyle;
+  loadingContainer?: ViewStyle;
+  loadingText?: TextStyle;
+  resultsContainer?: ViewStyle;
+  resultTitle?: TextStyle;
+  resultCount?: TextStyle;
+  emptyContainer?: ViewStyle;
+  emptyLottie?: ViewStyle;
+  emptyText?: TextStyle;
+  emptySubtext?: TextStyle;
+  listContent?: ViewStyle;
+  userCard?: ViewStyle;
+  avatarContainer?: ViewStyle;
+  avatar?: ImageStyle;
+  userInfo?: ViewStyle;
+  nameRow?: ViewStyle;
+  name?: TextStyle;
+  username?: TextStyle;
+  sentRequest?: ViewStyle;
+  sentRequestText?: TextStyle;
+  receivedRequest?: ViewStyle;
+  receivedRequestText?: TextStyle;
+  requestCard?: ViewStyle;
+  cardBlur?: ViewStyle;
+  requestHeader?: ViewStyle;
+  onlineIndicator?: ViewStyle;
+  requestInfo?: ViewStyle;
+  requestTimeContainer?: ViewStyle;
+  requestTime?: TextStyle;
+  messageContainer?: ViewStyle;
+  quoteBar?: ViewStyle;
+  message?: TextStyle;
+  actionButtons?: ViewStyle;
+  rejectButton?: ViewStyle;
+  acceptButton?: ViewStyle;
+  buttonText?: TextStyle;
+  buttonIcon?: ViewStyle;
+};

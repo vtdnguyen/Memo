@@ -1,197 +1,141 @@
-import React, { useState, useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  FlatList,
-  TouchableOpacity,
-  Image,
-  StyleSheet,
-  ActivityIndicator,
-  Keyboard,
-  Animated,
-  Dimensions,
-  SafeAreaView,
-  Alert
-} from 'react-native';
-import { colors } from "@/constants/Colors";
-import { ArrowLeft, Search, X, UserPlus, Check, UserMinus, UserCheck } from 'lucide-react-native';
-import { BlurView } from 'expo-blur';
+import React, { useState, useEffect, useRef } from "react";
+import { Animated, SafeAreaView, StatusBar, Alert, View, ActivityIndicator, StyleProp, ViewStyle } from "react-native";
+import axios from "axios";
+import { API_URL } from "@/src/redux/slices/authSlice";
+import { colors, styles } from "@/src/components/friend/styles";
+import { Header } from "@/src/components/friend/header";  
+import { SearchBar } from "@/src/components/friend/searchBar";
+import { Tabs } from "@/src/components/friend/tabs";
+import { UserItem } from "@/src/components/friend/userItem";
+import { RequestItem } from "@/src/components/friend/requestItem";
+import { EmptyState } from "@/src/components/friend/emptyState";
+import { FlatList, Text, TextStyle } from "react-native";
 
-// Kiểu dữ liệu người dùng mở rộng
-interface User {
-  id: string;
-  name: string;
-  avatar: string;
-  username: string;
-  mutualFriends?: number;
-  online?: boolean;
-  lastActive?: string;
+import moment from 'moment'
+import { FriendRequest } from "@/src/types/friend";
+import { User } from "@/src/types/auth";
+
+interface FriendRequestScreenProps {
+  onClose: () => void;
 }
 
-// Kiểu dữ liệu lời mời kết bạn
-interface FriendRequest {
-  id: string;
-  user: User;
-  date: string;
-  message?: string;
-}
-
-// Dữ liệu giả lập phong phú hơn
-const mockUsers: User[] = [
-  { 
-    id: '1', 
-    name: 'Nguyễn Văn A', 
-    avatar: 'https://randomuser.me/api/portraits/men/1.jpg', 
-    username: 'nguyenvana',
-    mutualFriends: 5,
-    online: true
-  },
-  { 
-    id: '2', 
-    name: 'Trần Thị B', 
-    avatar: 'https://randomuser.me/api/portraits/women/2.jpg', 
-    username: 'tranthib',
-    mutualFriends: 2,
-    online: false,
-    lastActive: '10 phút trước'
-  },
-  { 
-    id: '3', 
-    name: 'Lê Văn C', 
-    avatar: 'https://randomuser.me/api/portraits/men/3.jpg', 
-    username: 'levanc',
-    mutualFriends: 0,
-    online: false,
-    lastActive: '2 giờ trước'
-  },
-  { 
-    id: '4', 
-    name: 'Phạm Thị D', 
-    avatar: 'https://randomuser.me/api/portraits/women/4.jpg', 
-    username: 'phamthid',
-    mutualFriends: 8,
-    online: true
-  },
-  { 
-    id: '5', 
-    name: 'Hoàng Văn E', 
-    avatar: 'https://randomuser.me/api/portraits/men/5.jpg', 
-    username: 'hoangvane',
-    mutualFriends: 1,
-    online: false,
-    lastActive: '1 ngày trước'
-  },
-];
-
-const mockRequests: FriendRequest[] = [
-  { 
-    id: '1', 
-    user: { 
-      id: '6', 
-      name: 'Dương Văn F', 
-      avatar: 'https://randomuser.me/api/portraits/men/6.jpg', 
-      username: 'duongvanf',
-      mutualFriends: 3,
-      online: true
-    },
-    date: '2 giờ trước',
-    message: 'Chào bạn, mình là Dương!'
-  },
-  { 
-    id: '2', 
-    user: { 
-      id: '7', 
-      name: 'Ngô Thị G', 
-      avatar: 'https://randomuser.me/api/portraits/women/7.jpg', 
-      username: 'ngothig',
-      mutualFriends: 7,
-      online: false,
-      lastActive: '5 phút trước'
-    },
-    date: '1 ngày trước'
-  },
-];
-
-// Đề xuất kết bạn dựa trên bạn chung
-const mockSuggestions: User[] = [
-  { 
-    id: '8', 
-    name: 'Trịnh Văn H', 
-    avatar: 'https://randomuser.me/api/portraits/men/8.jpg', 
-    username: 'trinhvanh',
-    mutualFriends: 12,
-    online: true
-  },
-  { 
-    id: '9', 
-    name: 'Lý Thị I', 
-    avatar: 'https://randomuser.me/api/portraits/women/9.jpg', 
-    username: 'lythii',
-    mutualFriends: 9,
-    online: false,
-    lastActive: '30 phút trước'
-  },
-];
-
-export const FriendRequestScreen = ({ onClose }: { onClose: () => void }) => {
-  const [searchText, setSearchText] = useState('');
+export const FriendRequestScreen: React.FC<FriendRequestScreenProps> = ({ onClose }) => {
+  const [searchText, setSearchText] = useState("");
   const [searchResults, setSearchResults] = useState<User[]>([]);
-  const [sentRequests, setSentRequests] = useState<Record<string, boolean>>({});
-  const [friendRequests, setFriendRequests] = useState<FriendRequest[]>(mockRequests);
+  const [sentRequests, setSentRequests] = useState<User[]>([]);
+  const [receivedRequests, setReceivedRequests] = useState<FriendRequest[]>([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'requests' | 'suggestions'>('requests');
-  
-  // Animated values
+  const [activeTab, setActiveTab] = useState<"requests" | "sent">("requests");
+
   const searchAnim = useRef(new Animated.Value(0)).current;
   const headerOpacity = useRef(new Animated.Value(1)).current;
   const listTranslateY = useRef(new Animated.Value(20)).current;
   const listOpacity = useRef(new Animated.Value(0)).current;
-  
-  // Refs để kiểm soát animation
+  const tabIndicatorPosition = useRef(new Animated.Value(0)).current;
+  const shimmerAnim = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const screenEntryAnim = useRef(new Animated.Value(0)).current;
+  const searchBoxAnim = useRef(new Animated.Value(0)).current;
+
   const animationsInitialized = useRef(false);
 
   useEffect(() => {
+    StatusBar.setBarStyle("light-content");
+
     if (!animationsInitialized.current) {
-      // Animation ban đầu khi màn hình hiển thị
-      Animated.parallel([
-        Animated.timing(listTranslateY, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(listOpacity, {
+      Animated.sequence([
+        Animated.timing(screenEntryAnim, {
           toValue: 1,
-          duration: 400,
+          duration: 600,
           useNativeDriver: true,
         }),
+        Animated.parallel([
+          Animated.timing(listTranslateY, {
+            toValue: 0,
+            duration: 400,
+            useNativeDriver: true,
+          }),
+          Animated.timing(listOpacity, {
+            toValue: 1,
+            duration: 500,
+            useNativeDriver: true,
+          }),
+          Animated.spring(searchBoxAnim, {
+            toValue: 1,
+            friction: 7,
+            tension: 40,
+            useNativeDriver: true,
+          }),
+        ]),
       ]).start();
+
+      startPulseAnimation();
+      startShimmerAnimation();
       animationsInitialized.current = true;
     }
   }, []);
 
   useEffect(() => {
-    if (searchText.trim() === '') {
+    Animated.spring(tabIndicatorPosition, {
+      toValue: activeTab === "requests" ? 0 : 1,
+      friction: 8,
+      tension: 60,
+      useNativeDriver: false,
+    }).start();
+  }, [activeTab]);
+
+  const startShimmerAnimation = () => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmerAnim, {
+          toValue: 1,
+          duration: 1500,
+          useNativeDriver: false,
+        }),
+        Animated.timing(shimmerAnim, {
+          toValue: 0,
+          duration: 1500,
+          useNativeDriver: false,
+        }),
+      ])
+    ).start();
+  };
+
+  const startPulseAnimation = () => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.08,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  };
+
+  useEffect(() => {
+    if (searchText.trim() === "") {
       setSearchResults([]);
-      
-      // Animation khi xóa tìm kiếm
       Animated.parallel([
         Animated.timing(headerOpacity, {
           toValue: 1,
-          duration: 200,
+          duration: 300,
           useNativeDriver: true,
         }),
         Animated.timing(searchAnim, {
           toValue: 0,
-          duration: 200,
+          duration: 300,
           useNativeDriver: false,
         }),
       ]).start();
-      
       return;
     }
 
-    // Animation khi bắt đầu tìm kiếm
     Animated.parallel([
       Animated.timing(headerOpacity, {
         toValue: 0,
@@ -206,72 +150,83 @@ export const FriendRequestScreen = ({ onClose }: { onClose: () => void }) => {
     ]).start();
 
     setLoading(true);
-    const handler = setTimeout(() => {
-      // Tìm kiếm nâng cao: ưu tiên kết quả có tên chính xác hơn
-      const result = mockUsers
-        .filter(u => 
-          u.name.toLowerCase().includes(searchText.toLowerCase()) ||
-          u.username.toLowerCase().includes(searchText.toLowerCase())
-        )
-        .sort((a, b) => {
-          // Ưu tiên người dùng có bạn chung
-          if (a.mutualFriends !== b.mutualFriends) {
-            return (b.mutualFriends || 0) - (a.mutualFriends || 0);
-          }
-          
-          // Ưu tiên người dùng đang online
-          if (a.online !== b.online) {
-            return a.online ? -1 : 1;
-          }
-          
-          // Sau đó ưu tiên theo độ chính xác khi tìm tên
-          const aNameMatch = a.name.toLowerCase().indexOf(searchText.toLowerCase());
-          const bNameMatch = b.name.toLowerCase().indexOf(searchText.toLowerCase());
-          
-          if (aNameMatch >= 0 && bNameMatch >= 0) {
-            return aNameMatch - bNameMatch;
-          }
-          
-          return 0;
-        });
-        
-      setSearchResults(result);
-      setLoading(false);
+    const handlerFindFriend = async () => {
+      try {
+        let response = await axios.get(
+          `${API_URL}/user?keyword=${searchText}&page=1&limit=10`,
+          { withCredentials: true }
+        );
+        let result = response.data;
 
-      // Animation khi hiển thị kết quả tìm kiếm
-      Animated.sequence([
-        Animated.timing(listOpacity, {
-          toValue: 0,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-        Animated.timing(listTranslateY, {
-          toValue: 10,
-          duration: 0,
-          useNativeDriver: true,
-        }),
-        Animated.parallel([
+        if (result.data.length > 0) {
+          result = result.data
+            .filter(
+              (u: User) =>
+                u.firstName.toLowerCase().includes(searchText.toLowerCase()) ||
+                u.lastName.toLowerCase().includes(searchText.toLowerCase()) ||
+                u.username.toLowerCase().includes(searchText.toLowerCase())
+            )
+            .sort((a: User, b: User) => {
+              const aNameMatch = a.firstName
+                .toLowerCase()
+                .indexOf(searchText.toLowerCase());
+              const bNameMatch = b.firstName
+                .toLowerCase()
+                .indexOf(searchText.toLowerCase());
+
+              if (aNameMatch >= 0 && bNameMatch >= 0) {
+                return aNameMatch - bNameMatch;
+              }
+              return 0;
+            });
+
+          setSearchResults(result);
+        } else {
+          setSearchResults([]);
+        }
+      } catch (error) {
+        console.error("Error searching users:", error);
+        setSearchResults([]);
+      } finally {
+        setLoading(false);
+        Animated.sequence([
           Animated.timing(listOpacity, {
-            toValue: 1,
-            duration: 300,
+            toValue: 0,
+            duration: 150,
             useNativeDriver: true,
           }),
           Animated.timing(listTranslateY, {
-            toValue: 0,
-            duration: 250,
+            toValue: 10,
+            duration: 0,
             useNativeDriver: true,
           }),
-        ])
-      ]).start();
-    }, 300);
+          Animated.parallel([
+            Animated.timing(listOpacity, {
+              toValue: 1,
+              duration: 300,
+              useNativeDriver: true,
+            }),
+            Animated.spring(listTranslateY, {
+              toValue: 0,
+              friction: 6,
+              tension: 50,
+              useNativeDriver: true,
+            }),
+          ]),
+        ]).start();
+      }
+    };
 
-    return () => clearTimeout(handler);
+    const timeoutId = setTimeout(() => {
+      handlerFindFriend();
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
   }, [searchText]);
 
   const sendRequest = (id: string) => {
-    // Animation khi gửi lời mời
     const buttonScale = new Animated.Value(1);
-    
+
     Animated.sequence([
       Animated.timing(buttonScale, {
         toValue: 0.9,
@@ -279,573 +234,348 @@ export const FriendRequestScreen = ({ onClose }: { onClose: () => void }) => {
         useNativeDriver: true,
       }),
       Animated.timing(buttonScale, {
-        toValue: 1.1,
-        duration: 100,
+        toValue: 1.15,
+        duration: 200,
         useNativeDriver: true,
       }),
-      Animated.timing(buttonScale, {
+      Animated.spring(buttonScale, {
         toValue: 1,
-        duration: 100,
+        friction: 4,
+        tension: 40,
         useNativeDriver: true,
-      })
+      }),
     ]).start();
-    
-    setSentRequests(prev => ({ ...prev, [id]: true }));
-    
-    // Thông báo gửi lời mời thành công
+
+    const handlerSendRequest = async () => {
+      let response = await axios.post(
+        `${API_URL}/friend/request`,
+        { receiverId: id },
+        { withCredentials: true }
+      );
+      console.log("send request response", response.data);
+    };
+    handlerSendRequest();
+
     Alert.alert(
       "Đã gửi lời mời kết bạn",
       "Chúng tôi sẽ thông báo khi người dùng chấp nhận lời mời của bạn.",
-      [{ text: "OK" }]
+      [{ text: "OK", style: "default" }]
     );
   };
 
-  const cancelRequest = (id: string) => {
-    // Xác nhận trước khi hủy
-    Alert.alert(
-      "Hủy lời mời kết bạn",
-      "Bạn có chắc muốn hủy lời mời kết bạn này?",
-      [
-        { text: "Hủy", style: "cancel" },
-        { 
-          text: "Xác nhận", 
-          style: "destructive",
-          onPress: () => {
-            const updated = { ...sentRequests };
-            delete updated[id];
-            setSentRequests(updated);
-          }
-        }
-      ]
+  const handleAcceptRequest = async (id: string, userId: string) => {
+    const response = await axios.post(
+      `${API_URL}/friend/request/${id}`,
+      { action: "accept" },
+      { withCredentials: true }
     );
-  };
+    console.log("accept request response", response);
 
-  const handleFriendRequest = (requestId: string, accepted: boolean) => {
-    // Animation khi xử lý lời mời
-    const fadeAnim = new Animated.Value(1);
+    if (response.status === 201) {
+      setReceivedRequests((prev) => prev.filter((req) => req.sender.id !== userId));
+
+      Alert.alert(
+        "Đã chấp nhận lời mời",
+        "Người dùng đã được thêm vào danh sách bạn bè của bạn!",
+        [{ text: "OK", style: "default" }]
+      );
+
+      const fadeAnim = new Animated.Value(1);
+      const scaleAnim = new Animated.Value(1);
+
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        Animated.sequence([
+          Animated.timing(scaleAnim, {
+            toValue: 1.1,
+            duration: 150,
+            useNativeDriver: true,
+          }),
+          Animated.timing(scaleAnim, {
+            toValue: 0,
+            duration: 250,
+            useNativeDriver: true,
+          }),
+        ]),
+      ]).start(() => {
+        console.log("accept request for id, userId:", id, userId);
+        
+      });
+    }
     
-    Animated.timing(fadeAnim, {
-      toValue: 0,
-      duration: 300,
-      useNativeDriver: true,
-    }).start(() => {
-      // Cập nhật danh sách lời mời sau khi animation hoàn thành
-      setFriendRequests(prev => prev.filter(req => req.id !== requestId));
-      
-      // Hiển thị thông báo phù hợp
-      if (accepted) {
-        Alert.alert(
-          "Đã chấp nhận lời mời",
-          "Người dùng đã được thêm vào danh sách bạn bè của bạn!",
-          [{ text: "OK" }]
-        );
-      }
+  };
+
+  const handleRejectRequest = async (id: string, userId: string) => {
+    const response = await axios.post(
+      `${API_URL}/friend/request/${id}`,
+      { action: "reject" },
+      { withCredentials: true }
+    );
+    console.log("reject request response", response);
+
+    if (response.status === 201) {
+      setReceivedRequests((prev) => prev.filter((req) => req.sender.id !== userId));
+
+      Alert.alert(
+        "Đã từ chối lời mời",
+        "Người dùng đã từ chối lời mời của bạn!",
+        [{ text: "OK", style: "default" }]
+      );
+      const scaleAnim = new Animated.Value(1);
+      const moveAnim = new Animated.Value(0);
+
+      Animated.parallel([
+        Animated.sequence([
+          Animated.timing(scaleAnim, {
+            toValue: 0.95,
+            duration: 100,
+            useNativeDriver: true,
+          }),
+          Animated.timing(scaleAnim, {
+            toValue: 1,
+            duration: 100,
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.timing(moveAnim, {
+          toValue: 500,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        console.log("reject request for id, userId:", id, userId);
+      });
+
+    }
+  };
+
+  const handleCancelRequest = async (id: string) => {
+
+    // TODO: handle cancel request
+    const scaleAnim = new Animated.Value(1);
+    const rotateAnim = new Animated.Value(0);
+
+    Animated.parallel([
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 0.8,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1.1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 0,
+          friction: 5,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.timing(rotateAnim, {
+        toValue: 1,
+        duration: 350,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setSentRequests((prev) => prev.filter((req) => req.id !== id));
     });
+
+    console.log("cancel request for id:", id);
   };
 
-  const clearSearch = () => {
-    setSearchText('');
-    Keyboard.dismiss();
-  };
+  useEffect(() => {
+    const handlerGetSentRequests = async () => {
+      let response = await axios.get(
+        `${API_URL}/friend/request?collection=requests-sent&page=1&limit=10`,
+        { withCredentials: true }
+      );
+      const pagination = response.data;
+      const data = pagination.data;
+      let users: User[] = [];
+      for (const item of data) {
+        const user = item.receiver as User;
+        users.push(user);
+      }
+      console.log("sent requests response", users);
+      setSentRequests(users);
+    };
+    handlerGetSentRequests();
+  }, []);
 
-  const renderUserItem = ({ item }: { item: User }) => {
-    const isSent = sentRequests[item.id];
+  useEffect(() => {
+    const handlerGetReceivedRequests = async () => {
+      let response = await axios.get(
+        `${API_URL}/friend/request?collection=requests-received&page=1&limit=10`,
+        { withCredentials: true }
+      );
+      const pagination = response.data;
+      const data = pagination.data;
+      console.log("received requests response", data);
+      
+      let users: FriendRequest[] = [];
+      for (const item of data) {
+        console.log("item", item);
+        
+        const user = item.sender;
+        const time = item.createdAt;
+        const n = moment.duration(moment().diff(moment(time)));
+        let timeAgoText = "";
+        if (n.asSeconds() < 60) {
+          timeAgoText = `${n.seconds()} giây trước`;
+        } else if (n.asMinutes() < 60) {
+          timeAgoText = `${n.minutes()} phút trước`;
+        } else if (n.asHours() < 24) {
+          timeAgoText = `${n.hours()} giờ trước`;
+        } else if (n.asDays() < 30) {
+          timeAgoText = `${n.days()} ngày trước`;
+        } else if (n.asMonths() < 12) {
+          timeAgoText = `${n.months()} tháng trước`;
+        } else {
+          timeAgoText = `${n.years()} năm trước`;
+        }
+        console.log("timeAgoText", timeAgoText);
+        
+        
+        users.push({ id: item.id, sender: user, timeAgo: timeAgoText });
+      }
+      console.log("users", users);
+      
+      setReceivedRequests(users);
+    };
+    handlerGetReceivedRequests();
+  }, []);
 
-    return (
-      <Animated.View style={[styles.userCard, { opacity: listOpacity, transform: [{ translateY: listTranslateY }] }]}>
-        <View style={styles.avatarContainer}>
-          <Image source={{ uri: item.avatar }} style={styles.avatar} />
-          {item.online && <View style={styles.onlineIndicator} />}
-        </View>
-        
-        <View style={styles.userInfo}>
-          <View style={styles.nameRow}>
-            <Text style={styles.name}>{item.name}</Text>
-          </View>
-          <Text style={styles.username}>@{item.username}</Text>
-          
-          {item.mutualFriends !== undefined && item.mutualFriends > 0 && (
-            <Text style={styles.mutualFriends}>{item.mutualFriends} bạn chung</Text>
-          )}
-          
-          {!item.online && item.lastActive && (
-            <Text style={styles.lastActive}>Hoạt động: {item.lastActive}</Text>
-          )}
-        </View>
-        
-        {isSent ? (
-          <TouchableOpacity 
-            style={styles.sentButton} 
-            onPress={() => cancelRequest(item.id)}
-            activeOpacity={0.7}
-          >
-            <UserCheck size={16} color={colors.white} />
-            <Text style={styles.sentButtonText}>Đã gửi</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity 
-            style={styles.addButton} 
-            onPress={() => sendRequest(item.id)}
-            activeOpacity={0.7}
-          >
-            <UserPlus size={16} color={colors.white} />
-            <Text style={styles.addButtonText}>Kết bạn</Text>
-          </TouchableOpacity>
-        )}
-      </Animated.View>
-    );
-  };
-
-  const renderRequestItem = ({ item }: { item: FriendRequest }) => {
-    return (
-      <Animated.View style={[styles.requestCard, { opacity: listOpacity, transform: [{ translateY: listTranslateY }] }]}>
-        <View style={styles.requestHeader}>
-          <View style={styles.avatarContainer}>
-            <Image source={{ uri: item.user.avatar }} style={styles.avatar} />
-            {item.user.online && <View style={styles.onlineIndicator} />}
-          </View>
-          
-          <View style={styles.requestInfo}>
-            <Text style={styles.name}>{item.user.name}</Text>
-            <Text style={styles.username}>@{item.user.username}</Text>
-            
-            {item.user.mutualFriends !== undefined && item.user.mutualFriends > 0 && (
-              <Text style={styles.mutualFriends}>{item.user.mutualFriends} bạn chung</Text>
-            )}
-            
-            <Text style={styles.requestTime}>{item.date}</Text>
-          </View>
-        </View>
-        
-        {item.message && (
-          <View style={styles.messageContainer}>
-            <Text style={styles.message}>{item.message}</Text>
-          </View>
-        )}
-        
-        <View style={styles.actionButtons}>
-          <TouchableOpacity 
-            style={styles.rejectButton} 
-            onPress={() => handleFriendRequest(item.id, false)}
-            activeOpacity={0.7}
-          >
-            <UserMinus size={16} color={colors.white} />
-            <Text style={styles.buttonText}>Từ chối</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.acceptButton} 
-            onPress={() => handleFriendRequest(item.id, true)}
-            activeOpacity={0.7}
-          >
-            <UserPlus size={16} color={colors.white} />
-            <Text style={styles.buttonText}>Chấp nhận</Text>
-          </TouchableOpacity>
-        </View>
-      </Animated.View>
-    );
-  };
+  const screenScale = screenEntryAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.95, 1],
+  });
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.backButton} 
-            onPress={onClose}
-            activeOpacity={0.7}
-          >
-            <ArrowLeft color={colors.white} size={24} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Bạn bè</Text>
-        </View>
-        
-        {/* Search bar */}
-        <View style={styles.searchContainer}>
-          <Search color={colors.lightGray} size={18} style={styles.searchIcon} />
-          <TextInput
-            value={searchText}
-            onChangeText={setSearchText}
-            placeholder="Tìm bạn bè..."
-            placeholderTextColor={colors.lightGray}
-            style={styles.input}
-            onSubmitEditing={Keyboard.dismiss}
-          />
-          {searchText.length > 0 && (
-            <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
-              <X color={colors.lightGray} size={18} />
-            </TouchableOpacity>
-          )}
-        </View>
-        
-        {/* Tab navigation when not searching */}
-        <Animated.View style={[styles.tabContainer, { opacity: headerOpacity }]}>
-          <TouchableOpacity 
-            style={[styles.tab, activeTab === 'requests' && styles.activeTab]}
-            onPress={() => setActiveTab('requests')}
-          >
-            <Text style={[styles.tabText, activeTab === 'requests' && styles.activeTabText]}>
-              Lời mời ({friendRequests.length})
-            </Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={[styles.tab, activeTab === 'suggestions' && styles.activeTab]}
-            onPress={() => setActiveTab('suggestions')}
-          >
-            <Text style={[styles.tabText, activeTab === 'suggestions' && styles.activeTabText]}>
-              Gợi ý
-            </Text>
-          </TouchableOpacity>
-        </Animated.View>
-        
-        {/* Content based on state */}
+    <SafeAreaView style={styles.safeArea as StyleProp<ViewStyle>}>
+      <Animated.View
+        style={[
+          styles.container as StyleProp<ViewStyle>,
+          {
+            opacity: screenEntryAnim,
+            transform: [{ scale: screenScale }],
+          },
+        ]}
+      >
+        <Header onClose={onClose} receivedRequestsCount={receivedRequests.length} />
+        <SearchBar
+          searchText={searchText}
+          setSearchText={setSearchText}
+          searchBoxAnim={searchBoxAnim}
+        />
+        <Tabs
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          receivedRequestsCount={receivedRequests.length}
+          sentRequestsCount={sentRequests.length}
+          tabIndicatorPosition={tabIndicatorPosition}
+          headerOpacity={headerOpacity}
+        />
         {loading ? (
-          <View style={styles.loadingContainer}>
+          <View style={styles.loadingContainer as StyleProp<ViewStyle>}>
             <ActivityIndicator size="large" color={colors.primary} />
             <Text style={styles.loadingText}>Đang tìm kiếm...</Text>
           </View>
-        ) : searchText.trim() !== '' ? (
-          // Search results
-          <View style={styles.resultsContainer}>
-            <Text style={styles.resultTitle}>Kết quả tìm kiếm</Text>
+        ) : searchText.trim() !== "" ? (
+          <Animated.View
+            style={[
+              styles.resultsContainer as StyleProp<ViewStyle>,
+              { opacity: searchAnim },
+            ]}
+          >
+            <Text style={styles.resultTitle}>
+              Kết quả tìm kiếm
+              <Text style={styles.resultCount}> ({searchResults.length})</Text>
+            </Text>
             {searchResults.length === 0 ? (
-              <View style={styles.emptyContainer}>
-                <Image 
-                  source={{ uri: 'https://cdn.iconscout.com/icon/free/png-256/free-search-not-found-1-1064057.png' }} 
-                  style={styles.emptyImage} 
-                />
-                <Text style={styles.emptyText}>Không tìm thấy người dùng phù hợp với từ khóa</Text>
-                <Text style={styles.emptySubtext}>Hãy thử tìm kiếm với từ khóa khác</Text>
-              </View>
+              <EmptyState type="search" />
             ) : (
               <FlatList
                 data={searchResults}
-                keyExtractor={item => item.id}
-                renderItem={renderUserItem}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                  <UserItem
+                    item={item}
+                    sentRequests={sentRequests}
+                    listOpacity={listOpacity}
+                    listTranslateY={listTranslateY}
+                    handleCancelRequest={handleCancelRequest}
+                    sendRequest={sendRequest}
+                    receivedRequests={receivedRequests}
+                    setReceivedRequests={setReceivedRequests}
+                    setSentRequests={setSentRequests}
+                  />
+                )}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.listContent}
               />
             )}
-          </View>
-        ) : activeTab === 'requests' ? (
-          // Friend requests
-          <View style={styles.resultsContainer}>
-            {friendRequests.length === 0 ? (
-              <View style={styles.emptyContainer}>
-                <Image 
-                  source={{ uri: 'https://cdn.iconscout.com/icon/free/png-256/free-empty-box-4085812-3385482.png' }} 
-                  style={styles.emptyImage} 
-                />
-                <Text style={styles.emptyText}>Không có lời mời kết bạn nào</Text>
-                <Text style={styles.emptySubtext}>Các lời mời kết bạn sẽ xuất hiện ở đây</Text>
-              </View>
+          </Animated.View>
+        ) : activeTab === "requests" ? (
+          <View style={styles.resultsContainer as StyleProp<ViewStyle>}>
+            <Text style={styles.resultTitle}>
+              Lời mời kết bạn
+              <Text style={styles.resultCount}> ({receivedRequests.length})</Text>
+            </Text>
+            {receivedRequests.length === 0 ? (
+              <EmptyState type="requests" />
             ) : (
               <FlatList
-                data={friendRequests}
-                keyExtractor={item => item.id}
-                renderItem={renderRequestItem}
+                data={receivedRequests}
+                keyExtractor={(item) => item.sender.id}
+                renderItem={({ item, index }) => (
+                  <RequestItem item={item} index={index} pulseAnim={pulseAnim} 
+                    onReject={handleRejectRequest} 
+                    onAccept={handleAcceptRequest} />
+                )}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.listContent}
               />
             )}
           </View>
         ) : (
-          // Friend suggestions
-          <View style={styles.resultsContainer}>
-            <Text style={styles.resultTitle}>Gợi ý kết bạn</Text>
-            <FlatList
-              data={mockSuggestions}
-              keyExtractor={item => item.id}
-              renderItem={renderUserItem}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.listContent}
-            />
+          <View style={styles.resultsContainer as StyleProp<ViewStyle>}>
+            <Text style={styles.resultTitle}>
+              Lời mời đã gửi
+              <Text style={styles.resultCount}> ({sentRequests.length})</Text>
+            </Text>
+            {sentRequests.length === 0 ? (
+              <EmptyState type="sent" />
+            ) : (
+              <FlatList
+                data={sentRequests}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                  <UserItem
+                    item={item}
+                    sentRequests={sentRequests}
+                    listOpacity={listOpacity}
+                    listTranslateY={listTranslateY}
+                    handleCancelRequest={handleCancelRequest}
+                    sendRequest={sendRequest}
+                    receivedRequests={receivedRequests}
+                    setReceivedRequests={setReceivedRequests}
+                    setSentRequests={setSentRequests}
+                  />
+                )}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.listContent}
+              />
+            )}
           </View>
         )}
-      </View>
+      </Animated.View>
     </SafeAreaView>
   );
 };
-
-const { width } = Dimensions.get('window');
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-    paddingHorizontal: 16,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-  },
-  backButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  headerTitle: {
-    color: colors.white,
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginLeft: 16,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.cardBackground,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    marginVertical: 12,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  input: {
-    flex: 1,
-    color: colors.white,
-    fontSize: 16,
-    paddingVertical: 12,
-  },
-  clearButton: {
-    padding: 8,
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    marginVertical: 16,
-    borderRadius: 12,
-    backgroundColor: colors.cardBackground,
-    padding: 4,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: 'center',
-    borderRadius: 8,
-  },
-  activeTab: {
-    backgroundColor: colors.primary,
-  },
-  tabText: {
-    color: colors.lightGray,
-    fontWeight: '500',
-  },
-  activeTabText: {
-    color: colors.white,
-    fontWeight: 'bold',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    color: colors.lightGray,
-    marginTop: 16,
-  },
-  resultsContainer: {
-    flex: 1,
-  },
-  resultTitle: {
-    color: colors.white,
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 16,
-  },
-  listContent: {
-    paddingBottom: 20,
-  },
-  userCard: {
-    flexDirection: 'row',
-    backgroundColor: colors.cardBackground,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
-    alignItems: 'center',
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  avatarContainer: {
-    position: 'relative',
-  },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: 12,
-  },
-  onlineIndicator: {
-    position: 'absolute',
-    bottom: 0,
-    right: 12,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: colors.success,
-    borderWidth: 2,
-    borderColor: colors.cardBackground,
-  },
-  userInfo: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  name: {
-    color: colors.white,
-    fontWeight: '600',
-    fontSize: 16,
-  },
-  username: {
-    color: colors.lightGray,
-    fontSize: 14,
-  },
-  mutualFriends: {
-    color: colors.primary,
-    fontSize: 12,
-    marginTop: 2,
-  },
-  lastActive: {
-    color: colors.lightGray,
-    fontSize: 12,
-    marginTop: 2,
-    fontStyle: 'italic',
-  },
-  addButton: {
-    backgroundColor: colors.primary,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  sentButton: {
-    backgroundColor: colors.secondary,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  addButtonText: {
-    color: colors.white,
-    fontWeight: '600',
-    fontSize: 13,
-    marginLeft: 4,
-  },
-  sentButtonText: {
-    color: colors.white,
-    fontWeight: '600',
-    fontSize: 13,
-    marginLeft: 4,
-  },
-  requestCard: {
-    backgroundColor: colors.cardBackground,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  requestHeader: {
-    flexDirection: 'row',
-    marginBottom: 12,
-  },
-  requestInfo: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  requestTime: {
-    color: colors.lightGray,
-    fontSize: 12,
-    marginTop: 4,
-  },
-  messageContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 12,
-  },
-  message: {
-    color: colors.white,
-    fontSize: 14,
-    fontStyle: 'italic',
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  acceptButton: {
-    backgroundColor: colors.success,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    flex: 1,
-    marginLeft: 8,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  rejectButton: {
-    backgroundColor: colors.danger,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    flex: 1,
-    marginRight: 8,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: colors.white,
-    fontWeight: '600',
-    fontSize: 14,
-    marginLeft: 6,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 40,
-  },
-  emptyImage: {
-    width: 100,
-    height: 100,
-    marginBottom: 16,
-    opacity: 0.6,
-  },
-  emptyText: {
-    color: colors.white,
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  emptySubtext: {
-    color: colors.lightGray,
-    fontSize: 14,
-    textAlign: 'center',
-    marginTop: 8,
-  },
-});
