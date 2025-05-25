@@ -32,20 +32,20 @@ interface Group {
 }
 
 // Sample data - replace with your API fetching logic
-const sampleFriends: Friend[] = [
-  { id: '1', name: 'Minh', avatar: 'https://randomuser.me/api/portraits/men/1.jpg' },
-  { id: '2', name: 'Linh', avatar: 'https://randomuser.me/api/portraits/women/2.jpg' },
-  { id: '3', name: 'Nam', avatar: 'https://randomuser.me/api/portraits/men/3.jpg' },
-  { id: '4', name: 'Hue', avatar: 'https://randomuser.me/api/portraits/women/4.jpg' },
-  { id: '5', name: 'Tuan', avatar: 'https://randomuser.me/api/portraits/men/5.jpg' },
-];
+// const sampleFriends: Friend[] = [
+//   { id: '1', name: 'Minh', avatar: 'https://randomuser.me/api/portraits/men/1.jpg' },
+//   { id: '2', name: 'Linh', avatar: 'https://randomuser.me/api/portraits/women/2.jpg' },
+//   { id: '3', name: 'Nam', avatar: 'https://randomuser.me/api/portraits/men/3.jpg' },
+//   { id: '4', name: 'Hue', avatar: 'https://randomuser.me/api/portraits/women/4.jpg' },
+//   { id: '5', name: 'Tuan', avatar: 'https://randomuser.me/api/portraits/men/5.jpg' },
+// ];
 
-const sampleGroups: Group[] = [
-  { id: '1', name: 'Family', avatar: 'https://randomuser.me/api/portraits/men/5.jpg' },
-  { id: '2', name: 'Coworkers', avatar: 'https://randomuser.me/api/portraits/men/8.jpg' },
-  { id: '3', name: 'School', avatar: 'https://randomuser.me/api/portraits/women/5.jpg' },
-  { id: '4', name: 'Neighbors', avatar: 'https://randomuser.me/api/portraits/women/8.jpg' },
-];
+// const sampleGroups: Group[] = [
+//   { id: '1', name: 'Family', avatar: 'https://randomuser.me/api/portraits/men/5.jpg' },
+//   { id: '2', name: 'Coworkers', avatar: 'https://randomuser.me/api/portraits/men/8.jpg' },
+//   { id: '3', name: 'School', avatar: 'https://randomuser.me/api/portraits/women/5.jpg' },
+//   { id: '4', name: 'Neighbors', avatar: 'https://randomuser.me/api/portraits/women/8.jpg' },
+// ];
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
@@ -340,19 +340,38 @@ export default function ConfigScreen(): React.ReactNode {
   // Simulate API fetch
   useEffect(() => {
     // Replace this with actual API calls
+    // const fetchData = async (): Promise<void> => {
+    //   try {
+    //     // Simulate network delay
+    //     await new Promise(resolve => setTimeout(resolve, 1000));
+    //     setFriends(sampleFriends);
+    //     setGroups(sampleGroups);
+    //   } catch (error) {
+    //     console.error('Error fetching data:', error);
+    //   } finally {
+    //     setLoading(false);
+    //   }
+    // };
+
+    // fetchData();
+
     const fetchData = async (): Promise<void> => {
       try {
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setFriends(sampleFriends);
-        setGroups(sampleGroups);
+        const friendsRes = await fetch('https://memo-app-be.onrender.com/friends');
+        // const groupsRes = await fetch('https://memo-app-be.onrender.com/user/groups');
+        const friendsData = await friendsRes.json();
+        // const groupsData = await groupsRes.json();
+    
+        setFriends(friendsData);
+        console.log('friendsData',friendsData);
+        
+        // setGroups(groupsData);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
@@ -411,6 +430,8 @@ export default function ConfigScreen(): React.ReactNode {
           'Content-Type': 'multipart/form-data',
         },
       });
+      console.log('response send picture',response);
+      
       const result = await response.json();
       console.log('Upload info:', result);
     } catch (error) {
@@ -446,7 +467,7 @@ export default function ConfigScreen(): React.ReactNode {
       
       <View style={styles.previewContainer}>
         <Image 
-          source={{ uri: capturedImage }} 
+          source={{ uri: capturedImage as string }} 
           style={styles.camera} 
           resizeMode="cover"
         />
