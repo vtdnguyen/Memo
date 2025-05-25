@@ -7,12 +7,12 @@ import ConfirmButton from "@/src/components/auth/confirmButton";
 import SubButton from "@/src/components/auth/subButton";
 import AuthPopup from "@/src/components/auth/authPopup";
 import { useEffect, useState, useCallback } from "react";
-import { useCustomFonts } from "@/src/hook/useFonts";
+import { useCustomFonts } from "@/src/hooks/useFonts";
 import * as SplashScreen from "expo-splash-screen";
 import { useAppDispatch, useAppSelector } from "@/src/redux/hooks";
 import { login, clearError, getUser } from "@/src/redux/slices/authSlice";
 import { RootState } from "@/src/redux/store";
-import { useRouter } from 'expo-router';
+import { useRouter } from "expo-router";
 import { colors } from "@/constants/Colors";
 import { LOCAL_URL } from "@/src/redux/slices/authSlice";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -36,11 +36,12 @@ export default function SignInScreen() {
   const dispatch = useAppDispatch();
   const router = useRouter();
 
-  const { loading, error: authError, isAuthenticated, user } = useAppSelector(
-    (state: RootState) => state.auth
-  );
-
-  
+  const {
+    loading,
+    error: authError,
+    isAuthenticated,
+    user,
+  } = useAppSelector((state: RootState) => state.auth);
 
   const prepareApp = useCallback(async () => {
     if (fontsLoaded) {
@@ -87,7 +88,6 @@ export default function SignInScreen() {
     };
     checkPersistedStorage();
   }, []);
-
 
   useEffect(() => {
     if (user) {
@@ -137,8 +137,14 @@ export default function SignInScreen() {
       if (isValid) {
         console.log("userIdentifier", userIdentifier);
         console.log("password", password);
-        
-        handleLogin({ account: typeUser === "email" ? userIdentifier : "+84" + userIdentifier.slice(1), password });
+
+        handleLogin({
+          account:
+            typeUser === "email"
+              ? userIdentifier
+              : "+84" + userIdentifier.slice(1),
+          password,
+        });
         setError("");
         setUserIdentifier("");
         setPassword("");
@@ -147,7 +153,14 @@ export default function SignInScreen() {
     }
 
     setIsConfirmButtonPressed(false);
-  }, [isConfirmButtonPressed, currentStep, userIdentifier, password, typeUser, handleLogin]);
+  }, [
+    isConfirmButtonPressed,
+    currentStep,
+    userIdentifier,
+    password,
+    typeUser,
+    handleLogin,
+  ]);
 
   if (!fontsLoaded || loading || isLoggedIn) {
     return (

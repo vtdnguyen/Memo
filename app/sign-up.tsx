@@ -14,7 +14,7 @@ import AuthInput from "@/src/components/auth/authInput";
 import ConfirmButton from "@/src/components/auth/confirmButton";
 import SubButton from "@/src/components/auth/subButton";
 import { useEffect, useState, useRef } from "react";
-import { useCustomFonts } from "@/src/hook/useFonts";
+import { useCustomFonts } from "@/src/hooks/useFonts";
 import * as SplashScreen from "expo-splash-screen";
 import AuthPopup from "@/src/components/auth/authPopup";
 import UserTab from "@/src/components/auth/userTab";
@@ -35,9 +35,7 @@ export default function SignUpScreen() {
   const [error, setError] = useState("");
   const [isConfirmButtonPressed, setIsConfirmButtonPressed] = useState(false);
   const [buttonActive, setButtonActive] = useState(false);
-  const [typeUser, setTypeUser] = useState<
-    "email" | "phone"
-  >("email");
+  const [typeUser, setTypeUser] = useState<"email" | "phone">("email");
   const [isVisiblePopup, setIsVisiblePopup] = useState(false);
   const [currentStep, setCurrentStep] = useState<Step>("input");
   const [userIdentifier, setUserIdentifier] = useState("");
@@ -312,7 +310,7 @@ export default function SignUpScreen() {
         );
       case "success":
         console.log("user", user);
-        
+
         return (
           <View
             style={{
@@ -333,10 +331,7 @@ export default function SignUpScreen() {
                   gap: 10,
                 }}
               >
-                <UserTab
-                  username={user?.username || ""}
-                  image={avatarUrl}
-                />
+                <UserTab username={user?.username || ""} image={avatarUrl} />
 
                 <Text style={styles.successText}>Thành công</Text>
                 <Text style={styles.findFriendText}>
@@ -537,7 +532,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 10,
     borderRadius: 10,
-    boxShadow: '0px 4px 10px rgba(0,0,0,0.3)',
+    boxShadow: "0px 4px 10px rgba(0,0,0,0.3)",
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
     elevation: 5,

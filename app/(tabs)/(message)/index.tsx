@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -14,47 +14,80 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Friend } from "@/src/types/message";
 import { TabBarContext } from "../_layout";
 import { colors } from "@/constants/Colors";
+import axios from "axios";
+import { API_URL } from "@/src/redux/slices/authSlice";
 
 // Mock data for friends with messages
-const mockFriends: Friend[] = [
-  {
-    id: "1",
-    name: "Sarah Johnson",
-    avatar: "https://randomuser.me/api/portraits/women/1.jpg",
-    unreadCount: 2,
-  },
-  {
-    id: "2",
-    name: "Mike Chen",
-    avatar: "https://randomuser.me/api/portraits/men/1.jpg",
-    unreadCount: 0,
-  },
-  {
-    id: "3",
-    name: "Emma Wilson",
-    avatar: "https://randomuser.me/api/portraits/women/2.jpg",
-    unreadCount: 1,
-  },
-  {
-    id: "4",
-    name: "Alex Rodriguez",
-    avatar: "https://randomuser.me/api/portraits/men/2.jpg",
-    unreadCount: 0,
-  },
-  {
-    id: "5",
-    name: "Lisa Taylor",
-    avatar: "https://randomuser.me/api/portraits/women/3.jpg",
-    unreadCount: 3,
-  },
-];
+// const mockFriends: Friend[] = [
+//   {
+//     id: "1",
+//     name: "Sarah Johnson",
+//     avatar: "https://randomuser.me/api/portraits/women/1.jpg",
+//     unreadCount: 2,
+//   },
+//   {
+//     id: "2",
+//     name: "Mike Chen",
+//     avatar: "https://randomuser.me/api/portraits/men/1.jpg",
+//     unreadCount: 0,
+//   },
+//   {
+//     id: "3",
+//     name: "Emma Wilson",
+//     avatar: "https://randomuser.me/api/portraits/women/2.jpg",
+//     unreadCount: 1,
+//   },
+//   {
+//     id: "4",
+//     name: "Alex Rodriguez",
+//     avatar: "https://randomuser.me/api/portraits/men/2.jpg",
+//     unreadCount: 0,
+//   },
+//   {
+//     id: "5",
+//     name: "Lisa Taylor",
+//     avatar: "https://randomuser.me/api/portraits/women/3.jpg",
+//     unreadCount: 3,
+//   },
+// ];
 
 export default function MessageScreen() {
   const insets = useSafeAreaInsets();
   const { showTabBar } = useContext(TabBarContext);
 
+  const [friends, setFriends] = useState<Friend[]>([]);
+
+  useEffect(() => {
+    const fetchFriends = async () => {
+      const page = 1;
+      const limit = 10;
+      const keyword = "";
+      const response = await axios.get(
+          `${API_URL}/friend?page=${page}&limit=${limit}&keyword=${keyword}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        }
+      );
+      for (const friend of response.data.data) {
+        console.log("friend",friend);
+        
+        setFriends((prev) => [...prev, 
+          {
+            id: friend.friend.id,
+            name: friend.friend.username,
+            avatar: friend.friend.avatar.url,
+            unreadCount: 0,
+          }
+        ]);
+      }
+    };
+    fetchFriends();
+  }, []);
+
   const handleFriendPress = (friend: Friend) => {
-    // Navigate to chat room with this friend
     router.push({
       pathname: "/(tabs)/(message)/[id]",
       params: { id: friend.id, name: friend.name, avatar: friend.avatar },
@@ -74,7 +107,7 @@ export default function MessageScreen() {
       <View style={styles.avatarContainer}>
         <TouchableOpacity
           style={styles.friendContainer}
-          activeOpacity={0.8} // Improved tactile feedback
+          activeOpacity={0.8}
         >
           <View
             style={[
@@ -113,7 +146,7 @@ export default function MessageScreen() {
       </View>
 
       <FlatList
-        data={mockFriends}
+        data={friends}
         renderItem={renderFriendItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContainer}
@@ -144,7 +177,7 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   headerRight: {
-    width: 24, // To balance the header
+    width: 24,
   },
   listContainer: {
     paddingVertical: 8,

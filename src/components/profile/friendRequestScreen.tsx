@@ -1,9 +1,18 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Animated, SafeAreaView, StatusBar, Alert, View, ActivityIndicator, StyleProp, ViewStyle } from "react-native";
+import {
+  Animated,
+  SafeAreaView,
+  StatusBar,
+  Alert,
+  View,
+  ActivityIndicator,
+  StyleProp,
+  ViewStyle,
+} from "react-native";
 import axios from "axios";
 import { API_URL } from "@/src/redux/slices/authSlice";
 import { colors, styles } from "@/src/components/friend/styles";
-import { Header } from "@/src/components/friend/header";  
+import { Header } from "@/src/components/friend/header";
 import { SearchBar } from "@/src/components/friend/searchBar";
 import { Tabs } from "@/src/components/friend/tabs";
 import { UserItem } from "@/src/components/friend/userItem";
@@ -11,16 +20,18 @@ import { RequestItem } from "@/src/components/friend/requestItem";
 import { EmptyState } from "@/src/components/friend/emptyState";
 import { FlatList, Text, TextStyle } from "react-native";
 
-import moment from 'moment'
+import moment from "moment";
 import { FriendRequest } from "@/src/types/friend";
 import { User } from "@/src/types/auth";
-import { formatTimeAgo } from "@/src/hook/helper";
+import { formatTimeAgo } from "@/src/hooks/helper";
 
 interface FriendRequestScreenProps {
   onClose: () => void;
 }
 
-export const FriendRequestScreen: React.FC<FriendRequestScreenProps> = ({ onClose }) => {
+export const FriendRequestScreen: React.FC<FriendRequestScreenProps> = ({
+  onClose,
+}) => {
   const [searchText, setSearchText] = useState("");
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [sentRequests, setSentRequests] = useState<User[]>([]);
@@ -273,7 +284,9 @@ export const FriendRequestScreen: React.FC<FriendRequestScreenProps> = ({ onClos
     console.log("accept request response", response);
 
     if (response.status === 201) {
-      setReceivedRequests((prev) => prev.filter((req) => req.sender.id !== userId));
+      setReceivedRequests((prev) =>
+        prev.filter((req) => req.sender.id !== userId)
+      );
 
       Alert.alert(
         "Đã chấp nhận lời mời",
@@ -304,10 +317,8 @@ export const FriendRequestScreen: React.FC<FriendRequestScreenProps> = ({ onClos
         ]),
       ]).start(() => {
         console.log("accept request for id, userId:", id, userId);
-        
       });
     }
-    
   };
 
   const handleRejectRequest = async (id: string, userId: string) => {
@@ -319,7 +330,9 @@ export const FriendRequestScreen: React.FC<FriendRequestScreenProps> = ({ onClos
     console.log("reject request response", response);
 
     if (response.status === 201) {
-      setReceivedRequests((prev) => prev.filter((req) => req.sender.id !== userId));
+      setReceivedRequests((prev) =>
+        prev.filter((req) => req.sender.id !== userId)
+      );
 
       Alert.alert(
         "Đã từ chối lời mời",
@@ -350,12 +363,10 @@ export const FriendRequestScreen: React.FC<FriendRequestScreenProps> = ({ onClos
       ]).start(() => {
         console.log("reject request for id, userId:", id, userId);
       });
-
     }
   };
 
   const handleCancelRequest = async (id: string) => {
-
     // TODO: handle cancel request
     const scaleAnim = new Animated.Value(1);
     const rotateAnim = new Animated.Value(0);
@@ -419,21 +430,20 @@ export const FriendRequestScreen: React.FC<FriendRequestScreenProps> = ({ onClos
       const pagination = response.data;
       const data = pagination.data;
       console.log("received requests response", data);
-      
+
       let users: FriendRequest[] = [];
       for (const item of data) {
         console.log("item", item);
-        
+
         const user = item.sender;
         const time = item.createdAt;
         const timeAgoText = formatTimeAgo(time);
         console.log("timeAgoText", timeAgoText);
-        
-        
+
         users.push({ id: item.id, sender: user, timeAgo: timeAgoText });
       }
       console.log("users", users);
-      
+
       setReceivedRequests(users);
     };
     handlerGetReceivedRequests();
@@ -455,7 +465,10 @@ export const FriendRequestScreen: React.FC<FriendRequestScreenProps> = ({ onClos
           },
         ]}
       >
-        <Header onClose={onClose} receivedRequestsCount={receivedRequests.length} />
+        <Header
+          onClose={onClose}
+          receivedRequestsCount={receivedRequests.length}
+        />
         <SearchBar
           searchText={searchText}
           setSearchText={setSearchText}
@@ -513,7 +526,10 @@ export const FriendRequestScreen: React.FC<FriendRequestScreenProps> = ({ onClos
           <View style={styles.resultsContainer as StyleProp<ViewStyle>}>
             <Text style={styles.resultTitle}>
               Lời mời kết bạn
-              <Text style={styles.resultCount}> ({receivedRequests.length})</Text>
+              <Text style={styles.resultCount}>
+                {" "}
+                ({receivedRequests.length})
+              </Text>
             </Text>
             {receivedRequests.length === 0 ? (
               <EmptyState type="requests" />
@@ -522,9 +538,13 @@ export const FriendRequestScreen: React.FC<FriendRequestScreenProps> = ({ onClos
                 data={receivedRequests}
                 keyExtractor={(item) => item.sender.id}
                 renderItem={({ item, index }) => (
-                  <RequestItem item={item} index={index} pulseAnim={pulseAnim} 
-                    onReject={handleRejectRequest} 
-                    onAccept={handleAcceptRequest} />
+                  <RequestItem
+                    item={item}
+                    index={index}
+                    pulseAnim={pulseAnim}
+                    onReject={handleRejectRequest}
+                    onAccept={handleAcceptRequest}
+                  />
                 )}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.listContent}

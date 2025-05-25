@@ -24,7 +24,7 @@ import CustomButton from "@/src/components/home/IconButton";
 import { TabBarContext } from "./_layout";
 import { router } from "expo-router";
 import FriendModal from "@/src/components/modal/FriendModal";
-import { formatTimeAgo, getUserProfileLink } from "@/src/hook/helper";
+import { formatTimeAgo, getUserProfileLink } from "@/src/hooks/helper";
 import { useSelector } from "react-redux";
 import { RootState } from "@/src/redux/store";
 
