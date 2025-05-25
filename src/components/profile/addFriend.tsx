@@ -1,7 +1,8 @@
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import MiniAvatar from './../auth/miniAvatar';
 import { useSelector } from 'react-redux';
 import { defaultAvatar } from "@/constants/images";
+import * as Clipboard from 'expo-clipboard';
 
 export default function AddFriend() {
   const user = useSelector((state: any) => state.auth.user);
@@ -9,9 +10,12 @@ export default function AddFriend() {
   const imageUrl = user.avatar ? user.avatar.url : defaultAvatar.avatarUrl;
   const link = `memo.vie/${user.username}`;
 
-  const handleAddFriend = () => {
+  const handleAddFriend = async () => {
     console.log("add friend");
+    await Clipboard.setStringAsync(link);
+    Alert.alert("Đã copy link", "Đã copy link vào clipboard");
   }
+
   return (
     <View style={styles.container}>
       <MiniAvatar image={imageUrl} />
@@ -45,6 +49,7 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     gap: 16,
     marginTop: 20,
+    width: '100%',
   },
   textContainer: {
     display: 'flex',
@@ -62,16 +67,16 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   textAbove: {
-    fontFamily: 'Poppins',
+    fontFamily: '',
     fontSize: 20,
     lineHeight: 26,
     color: '#FFFFEF',
-    fontWeight: '400',
+    fontWeight: '500',
     fontStyle: 'normal',
   },
   textBelow: {
-    fontFamily: 'Poppins',
-    fontSize: 16,
+    fontFamily: '',
+    fontSize: 18,
     lineHeight: 24,
     color: '#EDEDED',
     fontWeight: '400',

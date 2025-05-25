@@ -32,12 +32,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors._subject,
   },
   text: {
-    fontFamily: 'Open Sans',
+    fontFamily: 'Rounded Mplus 1c Bold',
     fontSize: 24,
     lineHeight: 24,
     textAlign: 'center',
     letterSpacing: 0.75,
     color: colors.white,
+    fontWeight: '500',
   },
 });
 

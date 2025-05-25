@@ -1,9 +1,8 @@
 import { ReactElement } from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native"
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Animated, Platform } from "react-native"
 import { ChevronRight } from "lucide-react-native";
 import { colors } from "@/constants/Colors";
-import { logout } from "@/src/redux/slices/authSlice";
-import { useAppDispatch } from "@/src/redux/hooks";
+
 interface ProfileFunctionProps {
     functionName: string;
     icon: ReactElement;
@@ -15,24 +14,21 @@ interface ProfileFunctionProps {
 
 export default function ProfileFunction({ functionName, icon, position, onPress }: ProfileFunctionProps) {
     const borderRadius = position === 'top' ? {borderTopLeftRadius: 20, borderTopRightRadius: 20} : position === 'bottom' ? {borderBottomLeftRadius: 20, borderBottomRightRadius: 20} : {borderRadius: 0};
-    const dispatch = useAppDispatch();
-    const handleFunction = () => {
-        if (functionName === 'Đăng xuất') {
-            dispatch(logout());
-        }
-        onPress && onPress();
-        console.log(functionName);
-    }
+    
+    const fadeAnim = new Animated.Value(1);
+
+   
 
     return (
-        <TouchableOpacity style={[styles.container, borderRadius]} onPress={handleFunction} activeOpacity={0.8}>
-            {icon}
-            <Text style={[styles.functionName, {color: functionName === 'Xóa tài khoản' ? colors._deleteAccount : colors._functionName}]}>{functionName}</Text>
-            <View style={styles.iconContainer}>
-                <ChevronRight size={28} color={colors._privacyPolicyText} />
-            </View>
-
-        </TouchableOpacity>
+        <Animated.View style={[ { width: '100%', opacity: fadeAnim }]}>
+            <TouchableOpacity style={[styles.container, borderRadius]} activeOpacity={0.8} onPress={onPress}>
+                {icon}
+                <Text style={[styles.functionName, {color: functionName === 'Xóa tài khoản' ? colors._deleteAccount : colors._functionName}]}>{functionName}</Text>
+                <View style={styles.iconContainer}>
+                    <ChevronRight size={28} color={colors._privacyPolicyText} />
+                </View>
+            </TouchableOpacity>
+        </Animated.View>
     )
 }
 

@@ -45,6 +45,7 @@ export const colors =
     _functionName: '#ECECEC',
     _functionContainer: '#595959',
     _deleteAccount: '#CD3B3B',
+    _logoutBackground: '#343333',
 
     lightGray: '#9E9E9E',
     divider: '#2A2A2A',

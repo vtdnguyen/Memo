@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { RootState } from '../store';
+import { AuthState } from '@/src/types/auth';
 // import CookieManager from '@react-native-cookies/cookies';
 
 export const API_URL = 'https://memo-app-be.onrender.com';
@@ -65,26 +66,19 @@ export const updateUser = createAsyncThunk(
 
 export const uploadAvatar = createAsyncThunk(
   'user/avatar',
-  async (formData: FormData, { rejectWithValue, getState }) => {
-    // const cookies = await CookieManager.get(API_URL);
-    // const cookieStr = Object.entries(cookies)
-    //   .map(([k, v]) => `${k}=${v.value}`)
-    //   .join('; ');
-
+  async ({ formData, config }: { formData: FormData; config: any }, { rejectWithValue }) => {
     try {
       const response = await axios.post(
         `${API_URL}/user/avatar`, 
         formData, 
-        { 
-          withCredentials: true,
-          //headers: { Cookie: cookieStr }
-        }
+        config
       );
       return response.data;
     } catch (error: unknown) {
-      if (axios.isAxiosError(error) && error.response?.data) {
-        const apiError = error.response.data;
-        return rejectWithValue(apiError.message || 'Upload avatar thất bại');
+      if (axios.isAxiosError(error)) {
+        const apiError = error.response?.data;
+        console.error('Upload error details:', apiError);
+        return rejectWithValue(apiError?.message || 'Upload avatar thất bại');
       }
       return rejectWithValue('Upload avatar thất bại');
     }

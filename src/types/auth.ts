@@ -17,7 +17,7 @@ export interface User {
     avatar: Avatar;
 }
 
-interface AuthState {
+export interface AuthState {
     token: string | null;
     refreshToken: string | null;
     isFirstTimeUser: boolean;
