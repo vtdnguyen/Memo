@@ -1,5 +1,5 @@
-import { colors } from '@/constants/Colors';
-import React, { useState, useEffect } from 'react';
+import { colors } from "@/constants/Colors";
+import React, { useState, useEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -11,10 +11,10 @@ import {
   ToastAndroid,
   Platform,
   Alert,
-  FlatList
-} from 'react-native';
-import CoreModal from './CoreModal';
-import { Feather } from '@expo/vector-icons';
+  FlatList,
+} from "react-native";
+import CoreModal from "./CoreModal";
+import { Feather } from "@expo/vector-icons";
 
 // Define the Friend interface
 interface Friend {
@@ -38,10 +38,13 @@ const FriendModal: React.FC<FriendModalProps> = ({
   visible,
   onClose,
   fetchUserData,
-  fetchFriends
+  fetchFriends,
 }) => {
   // State for user data and friends
-  const [userData, setUserData] = useState<{ profileLink: string; userId: string } | null>(null);
+  const [userData, setUserData] = useState<{
+    profileLink: string;
+    userId: string;
+  } | null>(null);
   const [friends, setFriends] = useState<Friend[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,41 +53,53 @@ const FriendModal: React.FC<FriendModalProps> = ({
   useEffect(() => {
     const loadData = async () => {
       if (visible) {
+        console.log("FriendModal: Starting to load data");
         setIsLoading(true);
         setError(null);
-        
+
         try {
-          // Fetch user data and friends in parallel
-          const [userDataResult, friendsResult] = await Promise.all([
-            fetchUserData(),
-            fetchFriends()
-          ]);
-          
+          console.log("FriendModal: Fetching user data and friends");
+          // const [userDataResult, friendsResult] = await Promise.all([
+          //   fetchUserData(),
+          //   fetchFriends(),
+          // ]);
+          // console.log("FriendModal: Data fetched successfully", {
+          //   userData: userDataResult,
+          //   friends: friendsResult,
+          // });
+          const userDataResult = await fetchUserData();
+          const friendsResult = await fetchFriends();
+
           setUserData(userDataResult);
           setFriends(friendsResult);
+          console.log("userData: ", userDataResult);
+          console.log("friends: ", friendsResult);
         } catch (err) {
-          console.error('Error loading data:', err);
-          setError('Failed to load data. Please try again.');
+          console.error("FriendModal: Error loading data:", err);
+          setError("Failed to load data. Please try again.");
         } finally {
           setIsLoading(false);
         }
       }
     };
-    
+
     loadData();
   }, [visible]);
-  
+
   // Define a function to copy the profile link to clipboard
   const copyToClipboard = () => {
     if (userData?.profileLink) {
       Clipboard.setString(userData.profileLink);
-      
+
       // Show toast on Android
-      if (Platform.OS === 'android') {
-        ToastAndroid.show('Profile link copied to clipboard!', ToastAndroid.SHORT);
+      if (Platform.OS === "android") {
+        ToastAndroid.show(
+          "Profile link copied to clipboard!",
+          ToastAndroid.SHORT
+        );
       } else {
         // Show alert on iOS
-        Alert.alert('Copied', 'Profile link copied to clipboard!');
+        Alert.alert("Copied", "Profile link copied to clipboard!");
       }
     }
   };
@@ -92,17 +107,28 @@ const FriendModal: React.FC<FriendModalProps> = ({
   // Create the profile section component
   const ProfileSection = () => (
     <View style={styles.profileSection}>
-      <View style={{flexDirection:'row'}}>
-        <Feather name={'link'} size={24} style={{paddingRight: 10, color:'white'}}/>
+      <View style={{ flexDirection: "row" }}>
+        <Feather
+          name={"link"}
+          size={24}
+          style={{ paddingRight: 10, color: "white" }}
+        />
         <Text style={styles.sectionTitle}>My Profile</Text>
       </View>
       {userData ? (
         <>
           <View style={styles.linkContainer}>
-            <Text style={styles.linkText} numberOfLines={1} ellipsizeMode="middle">
+            <Text
+              style={styles.linkText}
+              numberOfLines={1}
+              ellipsizeMode="middle"
+            >
               {userData.profileLink}
             </Text>
-            <TouchableOpacity style={styles.copyButton} onPress={copyToClipboard}>
+            <TouchableOpacity
+              style={styles.copyButton}
+              onPress={copyToClipboard}
+            >
               <Text style={styles.copyButtonText}>Copy</Text>
             </TouchableOpacity>
           </View>
@@ -119,18 +145,18 @@ const FriendModal: React.FC<FriendModalProps> = ({
   );
 
   // Create the friend list item component
-  const FriendItem = ({ friend }: { friend: Friend }) => (
-    <View style={styles.friendItem}>
-      <Image 
-        source={{ uri: friend.avatar }} 
-        style={styles.avatar} 
-      />
-      <View style={styles.friendInfo}>
+  const FriendItem = ({ friend }: { friend: Friend }) => {
+    console.log("friend: ", friend);
+    return (
+      <View style={styles.friendItem}>
+        <Image source={{ uri: friend.avatar }} style={styles.avatar} />
+        <View style={styles.friendInfo}>
         <Text style={styles.friendName}>{friend.name}</Text>
         <Text style={styles.friendId}>ID: {friend.id}</Text>
       </View>
     </View>
-  );
+    );
+  }
 
   // Create the friends list component
   const FriendsList = () => (
@@ -144,7 +170,9 @@ const FriendModal: React.FC<FriendModalProps> = ({
       ) : error ? (
         <Text style={styles.errorText}>{error}</Text>
       ) : friends.length === 0 ? (
-        <Text style={styles.emptyListText}>You don't have any friends yet.</Text>
+        <Text style={styles.emptyListText}>
+          You don't have any friends yet.
+        </Text>
       ) : (
         <FlatList
           data={friends}
@@ -160,8 +188,8 @@ const FriendModal: React.FC<FriendModalProps> = ({
   // Configure the single tab for CoreModal
   const tabs = [
     {
-      key: 'friends',
-      title: 'Friends',
+      key: "friends",
+      title: "Friends",
       content: (
         <View style={styles.container}>
           <ProfileSection />
@@ -195,13 +223,13 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 12,
     color: colors.white,
   },
   linkContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.bg,
     borderRadius: 8,
     padding: 10,
@@ -220,8 +248,8 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   copyButtonText: {
-    color: '#FFF',
-    fontWeight: '500',
+    color: "#FFF",
+    fontWeight: "500",
     fontSize: 14,
   },
   userIdText: {
@@ -235,8 +263,8 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   friendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderRadius: 12,
     padding: 12,
     marginBottom: 10,
@@ -253,7 +281,7 @@ const styles = StyleSheet.create({
   },
   friendName: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
     color: colors.white,
     marginBottom: 4,
   },
@@ -262,16 +290,16 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
   emptyListText: {
-    textAlign: 'center',
+    textAlign: "center",
     paddingVertical: 20,
     color: colors.white,
-    fontStyle: 'italic',
+    fontStyle: "italic",
   },
   loadingContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: 20,
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
   },
   loadingText: {
     marginLeft: 10,
@@ -279,9 +307,9 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
   errorText: {
-    textAlign: 'center',
+    textAlign: "center",
     paddingVertical: 15,
-    color:'#FF3B30',
+    color: "#FF3B30",
     fontSize: 14,
   },
 });
