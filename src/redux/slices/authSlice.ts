@@ -1,6 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { RootState } from '../store';
+import { AuthState } from '@/src/types/auth';
+// import CookieManager from '@react-native-cookies/cookies';
 
 export const API_URL = 'https://memo-app-be.onrender.com';
 export const LOCAL_URL = 'http://localhost:8081';
@@ -12,7 +14,7 @@ const initialState: AuthState = {
   isAuthenticated: false,
   user: null,
   loading: false,
-  error: null
+  error: null,
 };
 
 export const completeOnboarding = createAsyncThunk(
@@ -44,6 +46,53 @@ export const getUser = createAsyncThunk(
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Lấy thông tin người dùng thất bại');
+    }
+  }
+);
+
+export const updateUser = createAsyncThunk(
+  'user/update',
+  async (userData: { email?: string, password?: string, phoneNumber?: string, firstName?: string, lastName?: string }, { rejectWithValue }) => {
+    try {
+      console.log("userData", userData);
+      const response = await axios.put(`${API_URL}/user/me`, userData, { withCredentials: true });
+      console.log("update user response", response);
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Cập nhật thông tin người dùng thất bại');
+    }
+  }
+);
+
+export const uploadAvatar = createAsyncThunk(
+  'user/avatar',
+  async ({ formData, config }: { formData: FormData; config: any }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(
+        `${API_URL}/user/avatar`, 
+        formData, 
+        config
+      );
+      return response.data;
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        const apiError = error.response?.data;
+        console.error('Upload error details:', apiError);
+        return rejectWithValue(apiError?.message || 'Upload avatar thất bại');
+      }
+      return rejectWithValue('Upload avatar thất bại');
+    }
+  } 
+);
+
+export const getCookie = createAsyncThunk(
+  'auth/refreshToken',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`${API_URL}/auth/refresh`,  { withCredentials: true, });
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Lấy cookie thất bại');
     }
   }
 );
@@ -143,6 +192,39 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
+      // Update user
+      .addCase(updateUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = {
+          ...state.user,
+          ...action.payload,
+        };
+        console.log("update user fulfilled", action.payload);
+      })
+      .addCase(updateUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      // Upload avatar
+      .addCase(uploadAvatar.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(uploadAvatar.fulfilled, (state, action) => {
+        state.loading = false;
+        console.log("upload avatar fulfilled", action.payload);
+        if (state.user) {
+          state.user.avatar.url = action.payload.avatarUrl;
+        }
+      })
+      .addCase(uploadAvatar.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
       // Login
       .addCase(login.pending, (state) => {
         state.loading = true;
@@ -168,7 +250,7 @@ const authSlice = createSlice({
       .addCase(signup.fulfilled, (state, action) => {
         state.loading = false;
         console.log("signup fulfilled", action.payload);
-        state.user = action.payload;
+        // state.user = action.payload; // use to skip user interaction
       })
       .addCase(signup.rejected, (state, action) => {
         state.loading = false;

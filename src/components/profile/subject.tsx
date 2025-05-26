@@ -1,17 +1,16 @@
 import { colors } from '@/constants/Colors';
 import { View, Text, Image, StyleSheet } from 'react-native';
+import { ReactElement } from 'react';
 
 interface SubjectProps {
   subject: string;
-  icon: string;
+  icon: ReactElement;
 }
 
 export default function Subject({ subject, icon }: SubjectProps) {
   return (
     <View style={styles.container}>
-      <View style={styles.iconContainer}>
-        <Image source={{ uri: icon }} />
-      </View>
+      {icon}
       <Text style={styles.text}>{subject}</Text>
     </View>
   );
@@ -21,6 +20,10 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-start',
+    gap: 8,
+    marginTop: 14,
+    marginBottom: 6,
   },
   iconContainer: {
     width: 40,
@@ -29,12 +32,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors._subject,
   },
   text: {
-    fontFamily: 'Open Sans',
-    fontSize: 20,
-    lineHeight: 16,
+    fontFamily: 'Rounded Mplus 1c Bold',
+    fontSize: 24,
+    lineHeight: 24,
     textAlign: 'center',
     letterSpacing: 0.75,
     color: colors.white,
+    fontWeight: '500',
   },
 });
 

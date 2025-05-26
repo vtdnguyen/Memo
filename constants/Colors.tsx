@@ -38,6 +38,20 @@ export const colors =
     _privacyPolicyText: '#979797',
     _borderAvatar: '#3A3A3A',
     _subject: '#787878',
+    _editButton: '#454545',
+    _usernameText: '#D3D3D3',
+    _name: '#B3B3B3',
+    _editButtonBorder: '#696969',
+    _functionName: '#ECECEC',
+    _functionContainer: '#595959',
+    _deleteAccount: '#CD3B3B',
+    _logoutBackground: '#343333',
+
+    lightGray: '#9E9E9E',
+    divider: '#2A2A2A',
+    cardBackground: '#1E1E1E',
+    success: '#4CAF50',
+    danger: '#F44336',
 
   }
 
