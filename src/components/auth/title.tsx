@@ -21,7 +21,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   text: {
-    fontFamily: "Poppins-SemiBold",
+    fontFamily: "Rounded Mplus 1c Bold",
     fontWeight: "600",
     fontStyle: "normal",
     fontSize: 24,

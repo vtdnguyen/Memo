@@ -1,13 +1,12 @@
-import {StyleSheet, Text, View, useWindowDimensions} from 'react-native';
-import React from 'react';
+import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import React from "react";
 import Animated, {
-  Extrapolation,
   SharedValue,
-  interpolate,
   useAnimatedStyle,
-} from 'react-native-reanimated';
-import {OnboardingData} from './data';
-import LottieView from 'lottie-react-native';
+  withSpring,
+} from "react-native-reanimated";
+import { OnboardingData } from "./data";
+import LottieView from "lottie-react-native";
 
 type Props = {
   index: number;
@@ -15,45 +14,37 @@ type Props = {
   item: OnboardingData;
 };
 
-const RenderItem = ({index, x, item}: Props) => {
-  const {width: SCREEN_WIDTH} = useWindowDimensions();
+const RenderItem = ({ index, x, item }: Props) => {
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
 
   const lottieAnimationStyle = useAnimatedStyle(() => {
-    const translateYAnimation = interpolate(
-      x.value,
-      [
-        (index - 1) * SCREEN_WIDTH,
-        index * SCREEN_WIDTH,
-        (index + 1) * SCREEN_WIDTH,
-      ],
-      [200, 0, -200],
-      Extrapolation.CLAMP,
-    );
-
     return {
-      transform: [{translateY: translateYAnimation}],
+      transform: [
+        {
+          translateY: withSpring(x.value === index * SCREEN_WIDTH ? 0 : 200, {
+            damping: 15,
+            stiffness: 100,
+          }),
+        },
+      ],
     };
   });
 
   const circleAnimation = useAnimatedStyle(() => {
-    const scale = interpolate(
-      x.value,
-      [
-        (index - 1) * SCREEN_WIDTH,
-        index * SCREEN_WIDTH,
-        (index + 1) * SCREEN_WIDTH,
-      ],
-      [1, 4, 4],
-      Extrapolation.CLAMP,
-    );
-
     return {
-      transform: [{scale: scale}],
+      transform: [
+        {
+          scale: withSpring(x.value === index * SCREEN_WIDTH ? 4 : 1, {
+            damping: 15,
+            stiffness: 100,
+          }),
+        },
+      ],
     };
   });
 
   return (
-    <View style={[styles.itemContainer, {width: SCREEN_WIDTH}]}>
+    <View style={[styles.itemContainer, { width: SCREEN_WIDTH }]}>
       <View style={styles.circleContainer}>
         <Animated.View
           style={[
@@ -78,7 +69,7 @@ const RenderItem = ({index, x, item}: Props) => {
           loop
         />
       </Animated.View>
-      <Text style={[styles.itemText, {color: item.textColor}]}>
+      <Text style={[styles.itemText, { color: item.textColor }]}>
         {item.text}
       </Text>
     </View>
@@ -90,21 +81,21 @@ export default RenderItem;
 const styles = StyleSheet.create({
   itemContainer: {
     flex: 1,
-    justifyContent: 'space-around',
-    alignItems: 'center',
+    justifyContent: "space-around",
+    alignItems: "center",
     marginBottom: 120,
   },
   itemText: {
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: 44,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 10,
     marginHorizontal: 20,
-    fontFamily: 'Raleway',
+    fontFamily: "Raleway",
   },
   circleContainer: {
     ...StyleSheet.absoluteFillObject,
-    alignItems: 'center',
-    justifyContent: 'flex-end',
+    alignItems: "center",
+    justifyContent: "flex-end",
   },
 });

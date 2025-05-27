@@ -91,7 +91,7 @@ export default function SignInScreen() {
 
   useEffect(() => {
     if (user) {
-      router.push(`${LOCAL_URL}/profile`);
+      router.push(`${LOCAL_URL}/(home)/`);
     }
   }, [user, router]);
 
@@ -179,10 +179,12 @@ export default function SignInScreen() {
             setButtonActive(userIdentifier.length > 0);
             setError("");
           } else {
-            router.push(`${LOCAL_URL}/onboarding`);
+            router.push(`${LOCAL_URL}/sign-up`);
           }
         }}
+        page='login'
       />
+
       <View style={styles.contentContainer}>
         <Title
           text={
@@ -258,6 +260,8 @@ const styles = StyleSheet.create({
     gap: 10,
     justifyContent: "center",
     alignItems: "center",
+    display: "flex",
+    flexDirection: "column",
   },
   errorContainer: {
     height: 100,

@@ -3,8 +3,8 @@ import {
   StyleSheet,
   TouchableWithoutFeedback,
   useWindowDimensions,
-} from 'react-native';
-import React from 'react';
+} from "react-native";
+import React from "react";
 import Animated, {
   AnimatedRef,
   SharedValue,
@@ -12,12 +12,12 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   withTiming,
-} from 'react-native-reanimated';
-import {OnboardingData} from '@/src/components/onboarding/data';
-import { router } from 'expo-router';
-import { completeOnboarding } from '@/src/redux/slices/authSlice';
-import { useAppDispatch } from '@/src/redux/hooks';
-import { LOCAL_URL } from '@/src/redux/slices/authSlice';
+} from "react-native-reanimated";
+import { OnboardingData } from "@/src/components/onboarding/data";
+import { router } from "expo-router";
+import { completeOnboarding } from "@/src/redux/slices/authSlice";
+import { useAppDispatch } from "@/src/redux/hooks";
+import { LOCAL_URL } from "@/src/redux/slices/authSlice";
 
 type Props = {
   dataLength: number;
@@ -26,11 +26,10 @@ type Props = {
   x: SharedValue<number>;
 };
 
-const CustomButton = ({flatListRef, flatListIndex, dataLength, x}: Props) => {
-  const {width: SCREEN_WIDTH} = useWindowDimensions();
+const CustomButton = ({ flatListRef, flatListIndex, dataLength, x }: Props) => {
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const dispatch = useAppDispatch();
 
-   const dispatch = useAppDispatch();
-    
   const buttonAnimationStyle = useAnimatedStyle(() => {
     return {
       width:
@@ -72,11 +71,12 @@ const CustomButton = ({flatListRef, flatListIndex, dataLength, x}: Props) => {
       ],
     };
   });
+
   const animatedColor = useAnimatedStyle(() => {
     const backgroundColor = interpolateColor(
       x.value,
       [0, SCREEN_WIDTH, 2 * SCREEN_WIDTH],
-      ['#30b363', '#13143e', '#163414'],
+      ["#30b363", "#13143e", "#163414"]
     );
 
     return {
@@ -84,41 +84,54 @@ const CustomButton = ({flatListRef, flatListIndex, dataLength, x}: Props) => {
     };
   });
 
-  return (
-    <TouchableWithoutFeedback
-      onPress={async () => {
-        const isLastSlide = flatListIndex.value >= dataLength - 1;
+  const handlePress = async () => {
 
-        if (!isLastSlide) {
-          const nextIndex = flatListIndex.value + 1;
-          flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
-          flatListIndex.value = nextIndex;
+    const isLastSlide = Math.round(flatListIndex.value) >= dataLength - 1;
+
+    if (!isLastSlide) {
+      const nextIndex = Math.round(flatListIndex.value) + 1;
+
+      flatListIndex.value = withTiming(nextIndex, {
+        duration: 200,
+      });
+      x.value = withTiming(nextIndex * SCREEN_WIDTH, {
+        duration: 200,
+      });
+
+      flatListRef.current?.scrollToIndex({
+        index: nextIndex,
+        animated: true,
+      });
+    } else {
+      try {
+        const response = await dispatch(completeOnboarding());
+        if (response.type === "auth/completeOnboarding/fulfilled") {
+          router.push(`${LOCAL_URL}/sign-in`);
         } else {
-          try {
-            const response = await dispatch(completeOnboarding());
-            if (response.type === "auth/completeOnboarding/fulfilled") {
-              console.log("Onboarding completed");
-              router.push(`${LOCAL_URL}/sign-in`);
-            } else {
-              console.error("Error completing onboarding:", response);
-            }
-          } catch (err) {
-            console.error("Dispatch failed:", err);
-          }
+          console.error("Error completing onboarding:", response);
         }
-      }}
-    >
-      <Animated.View style={[styles.container, buttonAnimationStyle, animatedColor]}>
+        console.log("isLastSlide", isLastSlide);
+        
+      } catch (err) {
+        console.error("Dispatch failed:", err);
+      }
+    }
+  };
+
+  return (
+    <TouchableWithoutFeedback onPress={handlePress}>
+      <Animated.View
+        style={[styles.container, buttonAnimationStyle, animatedColor]}
+      >
         <Animated.Text style={[styles.textButton, textAnimationStyle]}>
           Get Started
         </Animated.Text>
         <Animated.Image
-          source={require('@/assets/onboarding/ArrowIcon.png')}
+          source={require("@/assets/onboarding/ArrowIcon.png")}
           style={[styles.arrow, arrowAnimationStyle]}
         />
       </Animated.View>
     </TouchableWithoutFeedback>
-
   );
 };
 
@@ -126,15 +139,20 @@ export default CustomButton;
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#1e2169',
+    backgroundColor: "#1e2169",
     padding: 10,
     borderRadius: 100,
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
   },
   arrow: {
-    position: 'absolute',
+    position: "absolute",
   },
-  textButton: {color: 'white', fontSize: 18, position: 'absolute', fontFamily:'Raleway'},
+  textButton: {
+    color: "white",
+    fontSize: 18,
+    position: "absolute",
+    fontFamily: "Raleway",
+  },
 });

@@ -17,12 +17,13 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import { MaterialIcons, Ionicons, Feather } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
-import * as ImageManipulator from "expo-image-manipulator";
+import { FlipType, SaveFormat, useImageManipulator } from "expo-image-manipulator";
 import { colors } from "@/constants/Colors";
 import ExpandTab from "@/src/components/home/expand";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useImageContext } from "@/src/contexts/ImageContext";
 import { router } from "expo-router";
+import { ArrowRight, FlipHorizontal, RotateCw, X } from "lucide-react-native";
 
 export default function PhotoScreen() {
   // All useState hooks
@@ -36,7 +37,10 @@ export default function PhotoScreen() {
   // All other hooks
   const [permission, requestPermission] = useCameraPermissions();
   const insets = useSafeAreaInsets();
-  const { setCapturedImage } = useImageContext();
+  const { setCapturedImage, capturedImage } = useImageContext();
+
+  const context = useImageManipulator(capturedImage || "");
+
 
   // useEffect hooks
   useEffect(() => {
@@ -69,10 +73,28 @@ export default function PhotoScreen() {
     );
   }
 
+
+  const flipImage = async () => {
+    context.flip(FlipType.Horizontal);
+    const image = await context.renderAsync();
+    const result = await image.saveAsync({
+      format: SaveFormat.PNG,
+    });
+    setCapturedImage(result.uri);
+  };
+
+  const navigateToConfig = () => {
+    router.push("/(tabs)/(home)/config");
+  };
+
   const takePicture = async () => {
-    if (!cameraRef.current) return;
+    if (!cameraRef.current || capturedImage) return;
     try {
+      console.log('takePicture');
+      
       const photo = await cameraRef.current.takePictureAsync();
+      console.log('photo', photo);
+      
       if (!photo) {
         Alert.alert("Error", "No photo captured");
         return;
@@ -92,9 +114,10 @@ export default function PhotoScreen() {
       //   }],
       //   { format: ImageManipulator.SaveFormat.PNG, compress: 1 }
       // );
+      
       setCapturedImage(photo.uri);
-      //setCapturedImage(manipResult.uri);
-      router.push("/(tabs)/(home)/config");
+
+      // router.push("/(tabs)/(home)/config");
     } catch (e) {
       console.error(e);
       Alert.alert("Error", "Could not take picture");
@@ -102,14 +125,22 @@ export default function PhotoScreen() {
   };
 
   const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
-    if (!result.canceled && result.assets?.[0]) {
-      setCapturedImage(result.assets[0].uri);
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: "images",
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.7,
+        allowsMultipleSelection: false,
+      });
+
+      if (!result.canceled && result.assets?.[0]) {
+        setCapturedImage(result.assets[0].uri);
+        router.push("/(tabs)/(home)/config");
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Lỗi", "Không thể chọn ảnh. Vui lòng thử lại");
     }
   };
 
@@ -177,6 +208,12 @@ export default function PhotoScreen() {
           zoom={zoom}
           mirror={true}
         />
+        {capturedImage && (
+          <Image
+            source={{ uri: capturedImage }}
+            style={{ width: "100%", height: "100%" }}
+          />
+        )}
       </View>
 
       <TouchableOpacity>
@@ -199,6 +236,35 @@ export default function PhotoScreen() {
           <Feather name="rotate-cw" size={40} color="#F5F5F5" />
         </TouchableOpacity>
       </View>
+      {capturedImage && (
+        <View
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            flexDirection: "row",
+            gap: 10,
+            width: "100%",
+            position: "absolute",
+            bottom: 100,
+            left: 0,
+            right: 0,
+            zIndex: 1000,
+          }}
+        >
+          <TouchableOpacity style={styles.funcButton} onPress={() => setCapturedImage(null)}>
+            <X size={30} color="white" />
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => flipImage()} style={styles.funcButton}>
+            <FlipHorizontal size={30} color="white" />
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={navigateToConfig} style={styles.funcButton}>
+            <ArrowRight size={50} color="white" />
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
@@ -285,4 +351,16 @@ export const styles = StyleSheet.create({
     borderRadius: 10,
     margin: 20,
   },
+
+  funcButton: {
+    backgroundColor: colors.lightGray,
+    borderRadius: 100,
+    padding: 10,
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    width: 70,
+    height: 70,
+  }
+
 });
