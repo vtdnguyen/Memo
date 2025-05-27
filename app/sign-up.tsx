@@ -414,8 +414,7 @@ export default function SignUpScreen() {
             } else if (currentStep === "success") {
               setCurrentStep("input");
             } else {
-              console.log("Return onboarding");
-              router.push(`${LOCAL_URL}/onboarding`);
+              router.push(`${LOCAL_URL}/sign-in`);
             }
           }}
         />

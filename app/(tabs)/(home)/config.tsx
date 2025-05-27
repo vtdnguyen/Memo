@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  Alert,
+  TextInput,
 } from "react-native";
 import { useImageContext } from "@/src/contexts/ImageContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -14,7 +16,6 @@ import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { Feather, Ionicons, FontAwesome5 } from "@expo/vector-icons";
 import { colors } from "@/constants/Colors";
-import { styles } from "./index";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -25,6 +26,11 @@ import Animated, {
   Easing,
 } from "react-native-reanimated";
 import StatusRender from "@/src/hooks/StatusRender";
+import axios from "axios";
+import { API_URL } from "@/src/redux/slices/authSlice";
+import { useDispatch } from "react-redux";
+import { completeOnboarding } from "@/src/redux/slices/onboardingSlice";
+import * as FileSystem from "expo-file-system";
 
 // Define proper types
 interface Friend {
@@ -54,6 +60,7 @@ interface Group {
 //   { id: '3', name: 'School', avatar: 'https://randomuser.me/api/portraits/women/5.jpg' },
 //   { id: '4', name: 'Neighbors', avatar: 'https://randomuser.me/api/portraits/women/8.jpg' },
 // ];
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
@@ -84,6 +91,8 @@ export default function ConfigScreen(): React.ReactNode {
   const [groups, setGroups] = useState<Group[]>([]);
   const [everyoneSelected, setEveryoneSelected] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+  const [title, setTitle] = useState("");
+  const dispatch = useDispatch();
 
   // Move navigation logic to useEffect - this fixes the setState during render problem
   useEffect(() => {
@@ -270,6 +279,8 @@ export default function ConfigScreen(): React.ReactNode {
       };
     }, []);
 
+    console.log("friends", friends);
+
     return (
       <TouchableOpacity
         style={styles_fix.friendContainer}
@@ -363,26 +374,34 @@ export default function ConfigScreen(): React.ReactNode {
 
     // fetchData();
 
-    const fetchData = async (): Promise<void> => {
-      try {
-        const friendsRes = await fetch(
-          "https://memo-app-be.onrender.com/friends"
-        );
-        // const groupsRes = await fetch('https://memo-app-be.onrender.com/user/groups');
-        const friendsData = await friendsRes.json();
-        // const groupsData = await groupsRes.json();
+    const fetchFriends = async () => {
+      const page = 1;
+      const limit = 10;
+      const keyword = "";
+      const response = await axios.get(
+        `${API_URL}/friend?page=${page}&limit=${limit}&keyword=${keyword}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        }
+      );
+      for (const friend of response.data.data) {
+        console.log("friend", friend);
 
-        setFriends(friendsData);
-        console.log("friendsData", friendsData);
-
-        // setGroups(groupsData);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
+        setFriends((prev) => [
+          ...prev,
+          {
+            id: friend.friend.id,
+            name: friend.friend.username,
+            avatar: friend.friend.avatar.url,
+            unreadCount: 0,
+          },
+        ]);
       }
     };
-    fetchData();
+    fetchFriends();
   }, []);
 
   const toggleEveryoneSelection = (): void => {
@@ -423,34 +442,89 @@ export default function ConfigScreen(): React.ReactNode {
   };
 
   const sendPicture = async () => {
-    const formData = new FormData();
-    console.log("Sending picture");
-    formData.append("title", selectedHashtag as any); // Replace with actual user ID
-    formData.append("file", {
-      uri: capturedImage, // Local file path
-      type: "image/jpeg", // Adjust based on your image type
-      name: "photo.jpg", // File name
-    } as any);
-    //formData.append('status', selectedStatus?.name as any);
-    try {
-      const response = await fetch("https://memo-app-be.onrender.com/post", {
-        method: "POST",
-        body: formData,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-      console.log("response send picture", response);
-
-      const result = await response.json();
-      console.log("Upload info:", result);
-    } catch (error) {
-      console.error("Error uploading photo:", error);
+    if (!capturedImage) {
+      Alert.alert("Lỗi", "Không tìm thấy ảnh");
+      return;
     }
-    // Call API HERE (if needed)
-    clearAll(); // Clear context values
-    router.navigate("/(tabs)/(home)"); // Navigate
+    if (title === "") {
+      console.log("khong co title");
+    }
+
+    try {
+      // Kiểm tra kích thước file
+      // const fileInfo = await FileSystem.getInfoAsync(capturedImage);
+      // if (!fileInfo.exists) {
+      //   Alert.alert("Lỗi", "Không tìm thấy file ảnh");
+      //   return;
+      // }
+
+      // const fileSize = fileInfo.size || 0;
+      // if (fileSize > 5 * 1024 * 1024) {
+      //   // 5MB
+      //   Alert.alert("Lỗi", "Kích thước ảnh quá lớn (tối đa 5MB)");
+      //   return;
+      // }
+
+      let response = await fetch(capturedImage);
+      console.log("response", response);
+      const blob = await response.blob();
+
+      console.log("blob", blob);
+
+      if (blob.size > MAX_FILE_SIZE) {
+        Alert.alert("Lỗi", "Kích thước ảnh không được vượt quá 5MB", [
+          { text: "OK" },
+        ]);
+        return;
+      }
+      setLoading(true);
+
+      // Tạo FormData
+      const formData = new FormData();
+      formData.append("file", blob, `image.jpg`);
+      if (title !== "") {
+        formData.append("title", title);
+      }
+
+      console.log("FormData content:", {
+        file: blob,
+        title: title,
+        formData: formData,
+      });
+
+      // Gửi request
+      try {
+        response = await axios.post(`${API_URL}/post`, formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          withCredentials: true,
+        });
+
+        console.log("response", response);
+
+        // Reset context và chuyển màn hình
+        clearAll();
+        router.replace("/(tabs)");
+      } catch (error: any) {
+        console.error("Error details:", error.response?.data);
+        Alert.alert(
+          "Lỗi",
+          error.response?.data?.message ||
+            "Không thể tải ảnh lên. Vui lòng thử lại"
+        );
+      } finally {
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Lỗi", "Không thể tải ảnh lên. Vui lòng thử lại");
+    }
   };
+  useEffect(() => {
+    console.log("capturedImage", capturedImage);
+    setLoading(false);
+  }, [capturedImage]);
 
   // Render loading state if data is still loading
   if (loading) {
@@ -479,7 +553,7 @@ export default function ConfigScreen(): React.ReactNode {
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={34} color={colors.primary} />
         </TouchableOpacity>
-        <Text style={styles_fix.title}>#{selectedHashtag}</Text>
+        {/* <Text style={styles_fix.title}>#{selectedHashtag}</Text> */}
         <TouchableOpacity
           onPress={() => {
             sendPicture();
@@ -500,12 +574,12 @@ export default function ConfigScreen(): React.ReactNode {
             <StatusRender statusName={selectedStatus.name} onPress={() => {}} />
           </View>
         )}
-        <TouchableOpacity
+        {/* <TouchableOpacity
           onPress={() => router.push("/(tabs)/(home)/edit")}
           style={styles_fix.editButton}
         >
           <Feather name="edit" size={44} color={colors.white} />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
 
       <View style={styles_fix.chooseSharing}>
@@ -534,7 +608,7 @@ export default function ConfigScreen(): React.ReactNode {
           ))}
         </ScrollView>
 
-        <Text style={styles_fix.shareText}>hoặc nhóm:</Text>
+        {/* <Text style={styles_fix.shareText}>hoặc nhóm:</Text> */}
 
         <ScrollView
           horizontal
@@ -552,9 +626,48 @@ export default function ConfigScreen(): React.ReactNode {
           ))}
         </ScrollView>
       </View>
+
+      <TextInput
+        style={styles_fix.input}
+        placeholder="Nhập tiêu đề..."
+        placeholderTextColor={colors.grey}
+        value={title}
+        onChangeText={setTitle}
+      />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    paddingBottom: 80,
+    marginBottom: 80,
+    backgroundColor: colors.background,
+  },
+  topRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  previewContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    maxHeight: "70%",
+  },
+  camera: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 10,
+  },
+  editButton: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+  },
+});
 
 const styles_fix = StyleSheet.create({
   title: {
@@ -579,6 +692,7 @@ const styles_fix = StyleSheet.create({
     paddingHorizontal: 20,
     marginTop: 20,
     width: "100%",
+    maxHeight: "30%",
   },
   shareText: {
     fontSize: 20,
@@ -590,6 +704,7 @@ const styles_fix = StyleSheet.create({
     flexGrow: 0,
     marginBottom: 15,
     paddingVertical: 5,
+    maxHeight: 100,
   },
   scrollContent: {
     paddingHorizontal: 10,
@@ -641,5 +756,13 @@ const styles_fix = StyleSheet.create({
     width: 50,
     height: 30,
     borderRadius: 7,
+  },
+  input: {
+    backgroundColor: colors.white,
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 20,
+    color: colors.black,
+    marginHorizontal: 20,
   },
 });

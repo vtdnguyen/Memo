@@ -10,7 +10,6 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/constants/Colors";
-import { styles } from "./index";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
@@ -71,7 +70,7 @@ export default function Edit() {
   const insets = useSafeAreaInsets();
 
   return (
-    <>
+    <View>
       <View
         style={[
           styles.container,
@@ -123,7 +122,7 @@ export default function Edit() {
             placeholderTextColor="#fff"
             containerStyle={{ width: "40%" }}
             onChangeText={setHashtag}
-            value={hashtag}
+            value={hashtag ?? ""}
           />
         </View>
 
@@ -146,9 +145,42 @@ export default function Edit() {
         visible={statusTabVisible}
         onClose={(status: Status | null) => closeStatustab(status)}
       />
-    </>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    paddingBottom: 80,
+  },
+  topRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  previewContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    maxHeight: "60%",
+  },
+  camera: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 10,
+  },
+  editButton: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+  },
+  controlButton: {
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+});
 
 const styles_fix = StyleSheet.create({
   title: {
@@ -160,6 +192,7 @@ const styles_fix = StyleSheet.create({
     justifyContent: "space-around",
     alignItems: "center",
     marginTop: 20,
+    paddingHorizontal: 20,
   },
   statusButton: {
     position: "absolute",

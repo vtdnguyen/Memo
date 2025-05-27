@@ -1,5 +1,5 @@
-import { colors } from '@/constants/Colors';
-import React, { useRef, useState, useEffect } from 'react';
+import { colors } from "@/constants/Colors";
+import React, { useRef, useState, useEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -9,10 +9,10 @@ import {
   Dimensions,
   PanResponder,
   BackHandler,
-  ScrollView
-} from 'react-native';
+  ScrollView,
+} from "react-native";
 
-const { height } = Dimensions.get('window');
+const { height } = Dimensions.get("window");
 
 export interface TabConfig {
   key: string;
@@ -39,14 +39,16 @@ export const CoreModal: React.FC<CoreModalProps> = ({
   modalHeight = height * 0.78,
   headerComponent,
   footerComponent,
-  emptyComponent
+  emptyComponent,
 }) => {
   // Animation values
   const translateY = useRef(new Animated.Value(height)).current;
-  
+
   // State for tracking active tab
-  const [activeTabKey, setActiveTabKey] = useState<string>(initialTab || (tabs.length > 0 ? tabs[0].key : ''));
-  
+  const [activeTabKey, setActiveTabKey] = useState<string>(
+    initialTab || (tabs.length > 0 ? tabs[0].key : "")
+  );
+
   // Set up pan responder for swipe gesture handling
   const panResponder = useRef(
     PanResponder.create({
@@ -104,7 +106,10 @@ export const CoreModal: React.FC<CoreModalProps> = ({
     };
 
     // Add event listener for back button
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      handleBackPress
+    );
 
     // Cleanup listener on unmount or when visible changes
     return () => backHandler.remove();
@@ -133,16 +138,16 @@ export const CoreModal: React.FC<CoreModalProps> = ({
   };
 
   // Find active tab content
-  const activeTab = tabs.find(tab => tab.key === activeTabKey);
+  const activeTab = tabs.find((tab) => tab.key === activeTabKey);
   const activeContent = activeTab?.content;
 
   if (!visible) return null;
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity 
-        style={styles.overlay} 
-        activeOpacity={1} 
+      <TouchableOpacity
+        style={styles.overlay}
+        activeOpacity={1}
         onPress={hideModal}
       />
       <Animated.View
@@ -155,7 +160,7 @@ export const CoreModal: React.FC<CoreModalProps> = ({
                 translateY: translateY.interpolate({
                   inputRange: [0, height],
                   outputRange: [0, height],
-                  extrapolate: 'clamp',
+                  extrapolate: "clamp",
                 }),
               },
             ],
@@ -164,30 +169,38 @@ export const CoreModal: React.FC<CoreModalProps> = ({
       >
         <View {...panResponder.panHandlers}>
           <View style={styles.dragIndicator} />
-          
+
           {/* Custom Header if provided */}
           {headerComponent}
-          
+
           {/* Tab Bar */}
           <View style={styles.tabBar}>
             {tabs.map((tab) => (
               <TouchableOpacity
                 key={tab.key}
-                style={[styles.tab, activeTabKey === tab.key && styles.activeTab]}
+                style={[
+                  styles.tab,
+                  activeTabKey === tab.key && styles.activeTab,
+                ]}
                 onPress={() => handleTabChange(tab.key)}
               >
-                <Text style={[styles.tabText, activeTabKey === tab.key && styles.activeTabText]}>
+                <Text
+                  style={[
+                    styles.tabText,
+                    activeTabKey === tab.key && styles.activeTabText,
+                  ]}
+                >
                   {tab.title}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
-          
+
           {/* Tab Content */}
           <View style={styles.content}>
             {activeContent ? activeContent : emptyComponent}
           </View>
-          
+
           {/* Custom Footer if provided */}
           {footerComponent}
         </View>
@@ -199,12 +212,12 @@ export const CoreModal: React.FC<CoreModalProps> = ({
 const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
-    justifyContent: 'flex-end',
+    justifyContent: "flex-end",
     zIndex: 1000,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContainer: {
     backgroundColor: colors.background,
@@ -213,23 +226,24 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingHorizontal: 16,
     elevation: 6,
+    marginBottom: 80,
   },
   dragIndicator: {
-    alignSelf: 'center',
+    alignSelf: "center",
     width: 40,
     height: 5,
     borderRadius: 3,
-    backgroundColor: '#D3D3D3',
+    backgroundColor: "#D3D3D3",
     marginBottom: 10,
   },
   tabBar: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: 20,
   },
   tab: {
     flex: 1,
     paddingVertical: 15,
-    alignItems: 'center',
+    alignItems: "center",
   },
   activeTab: {
     borderBottomWidth: 2,
@@ -237,14 +251,15 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: 16,
-    color: '#8E8E93',
-    fontWeight: '500',
+    color: "#8E8E93",
+    fontWeight: "500",
   },
   activeTabText: {
     color: colors.primary,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   content: {
+    maxHeight: "70%",
   },
 });
 
