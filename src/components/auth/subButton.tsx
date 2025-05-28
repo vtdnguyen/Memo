@@ -33,7 +33,7 @@ export default function SubButton({ text, setTypeUser, type, setCopiedLink }: Su
         }
     }
     return (
-        <View>
+        <View style={{ width: '50%', alignSelf: 'center', display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
             {!sendPassword ? (
                 <TouchableOpacity style={styles.container} onPress={handlePress}>
                     { type === 'name' && <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">

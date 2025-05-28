@@ -25,10 +25,6 @@ export default function Avatar({ onPress }: { onPress: () => void }) {
 
   const imageUrl = user.avatar ? user.avatar.url : defaultAvatar.avatarUrl;
 
-  const handleEdit = () => {
-    console.log("edit");
-  };
-
   const checkPermissions = async () => {
     if (Platform.OS === "web") {
       return true;

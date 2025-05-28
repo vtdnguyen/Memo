@@ -1,22 +1,36 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, View, Image, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
-import { useImageContext } from '@/src/context/ImageContext';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter  } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { Feather, Ionicons, FontAwesome5 } from '@expo/vector-icons';
-import { colors } from '@/constants/Colors';
-import { styles } from './index';
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withSpring, 
+import React, { useState, useEffect, useRef } from "react";
+import {
+  StyleSheet,
+  View,
+  Image,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  Alert,
+  TextInput,
+} from "react-native";
+import { useImageContext } from "@/src/contexts/ImageContext";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { Feather, Ionicons, FontAwesome5 } from "@expo/vector-icons";
+import { colors } from "@/constants/Colors";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
   interpolateColor,
   withTiming,
   useDerivedValue,
-  Easing
-} from 'react-native-reanimated';
-import StatusRender from '@/src/hook/StatusRender';
+  Easing,
+} from "react-native-reanimated";
+import StatusRender from "@/src/hooks/StatusRender";
+import axios from "axios";
+import { API_URL } from "@/src/redux/slices/authSlice";
+import { useDispatch } from "react-redux";
+import { completeOnboarding } from "@/src/redux/slices/onboardingSlice";
+import * as FileSystem from "expo-file-system";
 
 // Define proper types
 interface Friend {
@@ -46,28 +60,30 @@ interface Group {
 //   { id: '3', name: 'School', avatar: 'https://randomuser.me/api/portraits/women/5.jpg' },
 //   { id: '4', name: 'Neighbors', avatar: 'https://randomuser.me/api/portraits/women/8.jpg' },
 // ];
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 // Spring animation config for smoother animations
 const SPRING_CONFIG = {
-  damping: 12,       // Increased damping for less oscillation
-  stiffness: 100,    // Moderate stiffness for responsive but smooth animation
-  mass: 0.8,         // Slightly lower mass for quicker movement
+  damping: 12, // Increased damping for less oscillation
+  stiffness: 100, // Moderate stiffness for responsive but smooth animation
+  mass: 0.8, // Slightly lower mass for quicker movement
   overshootClamping: false,
   restDisplacementThreshold: 0.01,
-  restSpeedThreshold: 0.01
+  restSpeedThreshold: 0.01,
 };
 
 // Color transition config
 const COLOR_TIMING_CONFIG = {
   duration: 250,
-  easing: Easing.bezier(0.25, 0.1, 0.25, 1)
+  easing: Easing.bezier(0.25, 0.1, 0.25, 1),
 };
 
 export default function ConfigScreen(): React.ReactNode {
   const router = useRouter();
-  const { capturedImage, selectedStatus, selectedHashtag, clearAll } = useImageContext();
+  const { capturedImage, selectedStatus, selectedHashtag, clearAll } =
+    useImageContext();
   const insets = useSafeAreaInsets();
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
@@ -75,11 +91,13 @@ export default function ConfigScreen(): React.ReactNode {
   const [groups, setGroups] = useState<Group[]>([]);
   const [everyoneSelected, setEveryoneSelected] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+  const [title, setTitle] = useState("");
+  const dispatch = useDispatch();
 
   // Move navigation logic to useEffect - this fixes the setState during render problem
   useEffect(() => {
     if (!capturedImage) {
-      router.replace('/(tabs)/(home)');
+      router.replace("/(tabs)/(home)");
     }
   }, [capturedImage, router]);
 
@@ -87,117 +105,118 @@ export default function ConfigScreen(): React.ReactNode {
   const prevSelectedFriends = useRef<string[]>([]);
   const prevSelectedGroups = useRef<string[]>([]);
   const prevEveryoneSelected = useRef<boolean>(false);
-  
+
   // Reference to hold items that need animation
   const animatingItems = useRef<Set<string>>(new Set());
-  
+
   // Update animating items when selections change
   useEffect(() => {
     // Find newly selected friends
-    selectedFriends.forEach(id => {
+    selectedFriends.forEach((id) => {
       if (!prevSelectedFriends.current.includes(id)) {
         animatingItems.current.add(`friend-${id}`);
       }
     });
-    
+
     // Find newly deselected friends
-    prevSelectedFriends.current.forEach(id => {
+    prevSelectedFriends.current.forEach((id) => {
       if (!selectedFriends.includes(id)) {
         animatingItems.current.add(`friend-${id}`);
       }
     });
-    
+
     // Keep track of current selection for next comparison
     prevSelectedFriends.current = [...selectedFriends];
-    
+
     // Clean animation flags after a delay - extended time for smoother feel
     const timer = setTimeout(() => {
       animatingItems.current = new Set();
     }, 100); // Increased from 300ms
-    
+
     return () => clearTimeout(timer);
   }, [selectedFriends]);
-  
+
   // Similar effect for groups
   useEffect(() => {
     // Find newly selected/deselected groups
-    selectedGroups.forEach(id => {
+    selectedGroups.forEach((id) => {
       if (!prevSelectedGroups.current.includes(id)) {
         animatingItems.current.add(`group-${id}`);
       }
     });
-    
-    prevSelectedGroups.current.forEach(id => {
+
+    prevSelectedGroups.current.forEach((id) => {
       if (!selectedGroups.includes(id)) {
         animatingItems.current.add(`group-${id}`);
       }
     });
-    
+
     prevSelectedGroups.current = [...selectedGroups];
-    
+
     const timer = setTimeout(() => {
       animatingItems.current = new Set();
     }, 100); // Increased from 300ms
-    
+
     return () => clearTimeout(timer);
   }, [selectedGroups]);
-  
+
   // Effect for everyone selection
   useEffect(() => {
     if (everyoneSelected !== prevEveryoneSelected.current) {
-      animatingItems.current.add('everyone');
+      animatingItems.current.add("everyone");
       prevEveryoneSelected.current = everyoneSelected;
-      
+
       const timer = setTimeout(() => {
         animatingItems.current = new Set();
       }, 100); // Increased from 300ms
-      
+
       return () => clearTimeout(timer);
     }
   }, [everyoneSelected]);
-  
+
   // Improved Friend Item component with better animations
-  const FriendItem = ({ friend, isSelected, onPress }: { 
-    friend: Friend, 
-    isSelected: boolean, 
-    onPress: () => void 
+  const FriendItem = ({
+    friend,
+    isSelected,
+    onPress,
+  }: {
+    friend: Friend;
+    isSelected: boolean;
+    onPress: () => void;
   }) => {
     const scale = useSharedValue(isSelected ? 1.2 : 1);
     const borderColorValue = useSharedValue(isSelected ? 1 : 0);
     const itemId = `friend-${friend.id}`;
-    
+
     // Use derived value for smoother transitions
     const animatedBorderColor = useDerivedValue(() => {
       return interpolateColor(
         borderColorValue.value,
         [0, 1],
-        ['#888888', colors.primary]
+        ["#888888", colors.primary]
       );
     });
-    
+
     // Only animate when selection changes
     useEffect(() => {
       // Animate color transition with timing for smooth effect
       borderColorValue.value = withTiming(
-        isSelected ? 1 : 0, 
+        isSelected ? 1 : 0,
         COLOR_TIMING_CONFIG
       );
-      
+
       // Determine if we should animate this transition
       const shouldAnimate = animatingItems.current.has(itemId);
-      
+
       if (shouldAnimate) {
         // Use optimized spring configuration
-        scale.value = withSpring(
-          isSelected ? 1.2 : 1,
-          SPRING_CONFIG
-        );
+        scale.value = withSpring(isSelected ? 1.2 : 1, SPRING_CONFIG);
       } else {
         // Direct value assignment for items previously selected
         scale.value = isSelected ? 1.2 : 1;
       }
     }, [isSelected]);
-    
+
     // Animated styles using derived values
     const animatedStyles = useAnimatedStyle(() => {
       return {
@@ -205,66 +224,65 @@ export default function ConfigScreen(): React.ReactNode {
         borderColor: animatedBorderColor.value,
       };
     }, []);
-    
+
     return (
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles_fix.friendContainer}
         onPress={onPress}
         activeOpacity={0.8} // Improved tactile feedback
       >
         <Animated.View style={[styles_fix.avatarRing, animatedStyles]}>
-          <Image 
-            source={{ uri: friend.avatar }}
-            style={styles_fix.avatar}
-          />
+          <Image source={{ uri: friend.avatar }} style={styles_fix.avatar} />
         </Animated.View>
       </TouchableOpacity>
     );
   };
-  
+
   // Improved Everyone button with animation
-  const EveryoneButton = ({ isSelected, onPress }: { 
-    isSelected: boolean, 
-    onPress: () => void 
+  const EveryoneButton = ({
+    isSelected,
+    onPress,
+  }: {
+    isSelected: boolean;
+    onPress: () => void;
   }) => {
     const scale = useSharedValue(isSelected ? 1.2 : 1);
     const borderColorValue = useSharedValue(isSelected ? 1 : 0);
-    
+
     // Use derived value for smoother color transitions
     const animatedBorderColor = useDerivedValue(() => {
       return interpolateColor(
         borderColorValue.value,
         [0, 1],
-        ['#888888', colors.primary]
+        ["#888888", colors.primary]
       );
     });
-    
+
     useEffect(() => {
       // Smooth color transition
       borderColorValue.value = withTiming(
         isSelected ? 1 : 0,
         COLOR_TIMING_CONFIG
       );
-      
-      if (animatingItems.current.has('everyone')) {
-        scale.value = withSpring(
-          isSelected ? 1.2 : 1,
-          SPRING_CONFIG
-        );
+
+      if (animatingItems.current.has("everyone")) {
+        scale.value = withSpring(isSelected ? 1.2 : 1, SPRING_CONFIG);
       } else {
         scale.value = isSelected ? 1.2 : 1;
       }
     }, [isSelected]);
-    
+
     const animatedStyles = useAnimatedStyle(() => {
       return {
         transform: [{ scale: scale.value }],
         borderColor: animatedBorderColor.value,
       };
     }, []);
-    
+
+    console.log("friends", friends);
+
     return (
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles_fix.friendContainer}
         onPress={onPress}
         activeOpacity={0.8}
@@ -277,65 +295,66 @@ export default function ConfigScreen(): React.ReactNode {
       </TouchableOpacity>
     );
   };
-  
+
   // Improved Group item with animation
-  const GroupItem = ({ group, isSelected, onPress }: { 
-    group: Group, 
-    isSelected: boolean, 
-    onPress: () => void 
+  const GroupItem = ({
+    group,
+    isSelected,
+    onPress,
+  }: {
+    group: Group;
+    isSelected: boolean;
+    onPress: () => void;
   }) => {
     const scale = useSharedValue(isSelected ? 1.1 : 1);
     const borderColorValue = useSharedValue(isSelected ? 1 : 0);
     const itemId = `group-${group.id}`;
-    
+
     // Use derived value for smoother transitions
     const animatedBorderColor = useDerivedValue(() => {
       return interpolateColor(
         borderColorValue.value,
         [0, 1],
-        ['#888888', colors.primary]
+        ["#888888", colors.primary]
       );
     });
-    
+
     useEffect(() => {
       // Smooth color transition
       borderColorValue.value = withTiming(
         isSelected ? 1 : 0,
         COLOR_TIMING_CONFIG
       );
-      
+
       if (animatingItems.current.has(itemId)) {
-        scale.value = withSpring(
-          isSelected ? 1.1 : 1,
-          SPRING_CONFIG
-        );
+        scale.value = withSpring(isSelected ? 1.1 : 1, SPRING_CONFIG);
       } else {
         scale.value = isSelected ? 1.1 : 1;
       }
     }, [isSelected]);
-    
+
     const animatedStyles = useAnimatedStyle(() => {
       return {
         transform: [{ scale: scale.value }],
         borderColor: animatedBorderColor.value,
       };
     }, []);
-    
+
     return (
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles_fix.friendContainer}
         onPress={onPress}
         activeOpacity={0.8}
       >
         <Animated.View style={[styles_fix.groupAvatarRing, animatedStyles]}>
-          <Image 
+          <Image
             source={{ uri: group.avatar }}
             style={styles_fix.groupAvatar}
           />
         </Animated.View>
       </TouchableOpacity>
     );
-  }
+  };
 
   // Simulate API fetch
   useEffect(() => {
@@ -355,24 +374,34 @@ export default function ConfigScreen(): React.ReactNode {
 
     // fetchData();
 
-    const fetchData = async (): Promise<void> => {
-      try {
-        const friendsRes = await fetch('https://memo-app-be.onrender.com/friends');
-        // const groupsRes = await fetch('https://memo-app-be.onrender.com/user/groups');
-        const friendsData = await friendsRes.json();
-        // const groupsData = await groupsRes.json();
-    
-        setFriends(friendsData);
-        console.log('friendsData',friendsData);
-        
-        // setGroups(groupsData);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
+    const fetchFriends = async () => {
+      const page = 1;
+      const limit = 10;
+      const keyword = "";
+      const response = await axios.get(
+        `${API_URL}/friend?page=${page}&limit=${limit}&keyword=${keyword}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        }
+      );
+      for (const friend of response.data.data) {
+        console.log("friend", friend);
+
+        setFriends((prev) => [
+          ...prev,
+          {
+            id: friend.friend.id,
+            name: friend.friend.username,
+            avatar: friend.friend.avatar.url,
+            unreadCount: 0,
+          },
+        ]);
       }
     };
-    fetchData();
+    fetchFriends();
   }, []);
 
   const toggleEveryoneSelection = (): void => {
@@ -395,7 +424,7 @@ export default function ConfigScreen(): React.ReactNode {
     // Toggle the selected friend
     const newSelection = [...selectedFriends];
     if (newSelection.includes(friendId)) {
-      setSelectedFriends(newSelection.filter(id => id !== friendId));
+      setSelectedFriends(newSelection.filter((id) => id !== friendId));
     } else {
       newSelection.push(friendId);
       setSelectedFriends(newSelection);
@@ -405,7 +434,7 @@ export default function ConfigScreen(): React.ReactNode {
   const toggleGroupSelection = (groupId: string): void => {
     const newSelection = [...selectedGroups];
     if (newSelection.includes(groupId)) {
-      setSelectedGroups(newSelection.filter(id => id !== groupId));
+      setSelectedGroups(newSelection.filter((id) => id !== groupId));
     } else {
       newSelection.push(groupId);
       setSelectedGroups(newSelection);
@@ -413,95 +442,164 @@ export default function ConfigScreen(): React.ReactNode {
   };
 
   const sendPicture = async () => {
-    const formData = new FormData();
-    console.log('Sending picture');
-    formData.append('title', selectedHashtag as any); // Replace with actual user ID
-    formData.append('file', {
-      uri: capturedImage, // Local file path
-      type: 'image/jpeg', // Adjust based on your image type
-      name: 'photo.jpg', // File name
-    } as any);
-    //formData.append('status', selectedStatus?.name as any);
-    try {
-      const response = await fetch('https://memo-app-be.onrender.com/post', {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      console.log('response send picture',response);
-      
-      const result = await response.json();
-      console.log('Upload info:', result);
-    } catch (error) {
-      console.error('Error uploading photo:', error);
+    if (!capturedImage) {
+      Alert.alert("Lỗi", "Không tìm thấy ảnh");
+      return;
     }
-    // Call API HERE (if needed)
-      clearAll(); // Clear context values
-      router.navigate('/(tabs)/(home)'); // Navigate
+    if (title === "") {
+      console.log("khong co title");
+    }
+
+    try {
+      // Kiểm tra kích thước file
+      // const fileInfo = await FileSystem.getInfoAsync(capturedImage);
+      // if (!fileInfo.exists) {
+      //   Alert.alert("Lỗi", "Không tìm thấy file ảnh");
+      //   return;
+      // }
+
+      // const fileSize = fileInfo.size || 0;
+      // if (fileSize > 5 * 1024 * 1024) {
+      //   // 5MB
+      //   Alert.alert("Lỗi", "Kích thước ảnh quá lớn (tối đa 5MB)");
+      //   return;
+      // }
+
+      let response = await fetch(capturedImage);
+      console.log("response", response);
+      const blob = await response.blob();
+
+      console.log("blob", blob);
+
+      if (blob.size > MAX_FILE_SIZE) {
+        Alert.alert("Lỗi", "Kích thước ảnh không được vượt quá 5MB", [
+          { text: "OK" },
+        ]);
+        return;
+      }
+      setLoading(true);
+
+      // Tạo FormData
+      const formData = new FormData();
+      formData.append("file", blob, `image.jpg`);
+      if (title !== "") {
+        formData.append("title", title);
+      }
+
+      console.log("FormData content:", {
+        file: blob,
+        title: title,
+        formData: formData,
+      });
+
+      // Gửi request
+      try {
+        response = await axios.post(`${API_URL}/post`, formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          withCredentials: true,
+        });
+
+        console.log("response", response);
+
+        // Reset context và chuyển màn hình
+        clearAll();
+        router.replace("/(tabs)");
+      } catch (error: any) {
+        console.error("Error details:", error.response?.data);
+        Alert.alert(
+          "Lỗi",
+          error.response?.data?.message ||
+            "Không thể tải ảnh lên. Vui lòng thử lại"
+        );
+      } finally {
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Lỗi", "Không thể tải ảnh lên. Vui lòng thử lại");
+    }
   };
+  useEffect(() => {
+    console.log("capturedImage", capturedImage);
+    setLoading(false);
+  }, [capturedImage]);
 
   // Render loading state if data is still loading
   if (loading) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <View
+        style={[
+          styles.container,
+          { justifyContent: "center", alignItems: "center" },
+        ]}
+      >
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + 10, paddingBottom: insets.bottom }]}>
+    <View
+      style={[
+        styles.container,
+        { paddingTop: insets.top + 10, paddingBottom: insets.bottom },
+      ]}
+    >
       <StatusBar style="light" />
-      
+
       <View style={[styles.topRow, { paddingBottom: 20 }]}>
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={34} color={colors.primary} />
         </TouchableOpacity>
-        <Text style={styles_fix.title}>#{selectedHashtag}</Text>
-        <TouchableOpacity onPress={() => {sendPicture()}}>
+        {/* <Text style={styles_fix.title}>#{selectedHashtag}</Text> */}
+        <TouchableOpacity
+          onPress={() => {
+            sendPicture();
+          }}
+        >
           <Feather name="send" size={34} color={colors.primary} />
         </TouchableOpacity>
       </View>
-      
+
       <View style={styles.previewContainer}>
-        <Image 
-          source={{ uri: capturedImage as string }} 
-          style={styles.camera} 
+        <Image
+          source={{ uri: capturedImage as string }}
+          style={styles.camera}
           resizeMode="cover"
         />
         {selectedStatus && (
           <View style={styles_fix.statusButton}>
-          <StatusRender 
-            statusName={selectedStatus.name} 
-            onPress={() => {}} 
-          />
+            <StatusRender statusName={selectedStatus.name} onPress={() => {}} />
           </View>
         )}
-        <TouchableOpacity onPress={() => router.push('/(tabs)/(home)/edit')} style={styles_fix.editButton}>
+        {/* <TouchableOpacity
+          onPress={() => router.push("/(tabs)/(home)/edit")}
+          style={styles_fix.editButton}
+        >
           <Feather name="edit" size={44} color={colors.white} />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
-      
+
       <View style={styles_fix.chooseSharing}>
         <Text style={styles_fix.shareText}>Chia sẻ với</Text>
-        
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false} 
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
           style={styles_fix.scrollContainer}
           contentContainerStyle={styles_fix.scrollContent}
         >
           {/* Everyone option */}
-          <EveryoneButton 
+          <EveryoneButton
             isSelected={everyoneSelected}
             onPress={toggleEveryoneSelection}
           />
 
           {/* Regular friends */}
           {friends.map((friend: Friend) => (
-            <FriendItem 
+            <FriendItem
               key={friend.id}
               friend={friend}
               isSelected={selectedFriends.includes(friend.id)}
@@ -509,17 +607,17 @@ export default function ConfigScreen(): React.ReactNode {
             />
           ))}
         </ScrollView>
-        
-        <Text style={styles_fix.shareText}>hoặc nhóm:</Text>
-        
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false} 
+
+        {/* <Text style={styles_fix.shareText}>hoặc nhóm:</Text> */}
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
           style={styles_fix.scrollContainer}
           contentContainerStyle={styles_fix.scrollContent}
         >
           {groups.map((group: Group) => (
-            <GroupItem 
+            <GroupItem
               key={group.id}
               group={group}
               isSelected={selectedGroups.includes(group.id)}
@@ -528,33 +626,73 @@ export default function ConfigScreen(): React.ReactNode {
           ))}
         </ScrollView>
       </View>
+
+      <TextInput
+        style={styles_fix.input}
+        placeholder="Nhập tiêu đề..."
+        placeholderTextColor={colors.grey}
+        value={title}
+        onChangeText={setTitle}
+      />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    paddingBottom: 80,
+    marginBottom: 80,
+    backgroundColor: colors.background,
+  },
+  topRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  previewContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    maxHeight: "70%",
+  },
+  camera: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 10,
+  },
+  editButton: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+  },
+});
 
 const styles_fix = StyleSheet.create({
   title: {
     fontSize: 20,
     color: colors.white,
-    fontStyle: 'italic'
+    fontStyle: "italic",
   },
   editButton: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 20,
     right: 20,
   },
   statusButton: {
-    position: 'absolute',
+    position: "absolute",
     top: 15,
     left: 15,
   },
   chooseSharing: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
     paddingHorizontal: 20,
     marginTop: 20,
-    width: '100%',
+    width: "100%",
+    maxHeight: "30%",
   },
   shareText: {
     fontSize: 20,
@@ -566,37 +704,38 @@ const styles_fix = StyleSheet.create({
     flexGrow: 0,
     marginBottom: 15,
     paddingVertical: 5,
+    maxHeight: 100,
   },
   scrollContent: {
     paddingHorizontal: 10,
-    alignItems: 'center',
+    alignItems: "center",
   },
   friendContainer: {
     marginRight: 34,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   avatarRing: {
     width: 40,
     height: 40,
     borderRadius: 25,
     padding: 3,
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     borderWidth: 2,
-    borderColor: '#888888',
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderColor: "#888888",
+    justifyContent: "center",
+    alignItems: "center",
   },
   groupAvatarRing: {
     width: 60,
     height: 40,
     borderRadius: 10,
     padding: 3,
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     borderWidth: 2,
-    borderColor: '#888888',
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderColor: "#888888",
+    justifyContent: "center",
+    alignItems: "center",
   },
   selectedRing: {
     borderColor: colors.primary,
@@ -610,12 +749,20 @@ const styles_fix = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   groupAvatar: {
     width: 50,
     height: 30,
     borderRadius: 7,
+  },
+  input: {
+    backgroundColor: colors.white,
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 20,
+    color: colors.black,
+    marginHorizontal: 20,
   },
 });
