@@ -80,7 +80,9 @@ export default function ReturnButton({ onPress, page, has }: ReturnButtonProps) 
             fill="white"
           />
         </Svg>
+
       </Pressable>)}
+      
       <View style={styles.pageTextContainer}>
         <Text style={styles.pageText}>{pageText}</Text>
       </View>
@@ -126,6 +128,7 @@ const styles = StyleSheet.create({
   },
   pageText: {
     fontSize: 24,
+
     fontWeight: "600",
     color: "white",
     letterSpacing: 0.5,

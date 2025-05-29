@@ -91,7 +91,6 @@ export default function SignInScreen() {
 
   useEffect(() => {
     if (user) {
-
       router.push(`${LOCAL_URL}/(home)/`);
     }
   }, [user, router]);
@@ -186,6 +185,7 @@ export default function SignInScreen() {
           page='login'
           has={currentStep === "input" ? false : true}
         />
+
 
       <View style={styles.contentContainer}>
         <Title

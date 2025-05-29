@@ -34,6 +34,7 @@ import { completeOnboarding } from "@/src/redux/slices/onboardingSlice";
 import * as FileSystem from "expo-file-system";
 import { ImageManipulator } from "expo-image-manipulator";
 
+
 // Define proper types
 interface Friend {
   id: string;
@@ -501,6 +502,7 @@ export default function ConfigScreen(): React.ReactNode {
         setTimeout(() => {
           router.replace("/(tabs)");
         }, 1000);
+
       } catch (error: any) {
         console.error("Error details:", error.response?.data);
         Alert.alert(
