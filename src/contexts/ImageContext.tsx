@@ -5,9 +5,11 @@ interface ImageContextType {
   capturedImage: string | null;
   selectedStatus: Status | null;
   selectedHashtag: string | null;
+  newPost: string | null;
   setSelectedHashtag: (hashtag: string | null) => void;
   setSelectedStatus: (status: Status | null) => void;
   setCapturedImage: (uri: string | null) => void;
+  setNewPost: (uri: string | null) => void;
   clearAll: () => void;
 }
 
@@ -17,6 +19,7 @@ export const ImageProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<Status | null>(null);
   const [selectedHashtag, setSelectedHashtag] = useState<string | null>(null);
+  const [newPost, setNewPost] = useState<string | null>(null)
 
   const clearAll = () => {
     setCapturedImage(null);
@@ -31,6 +34,8 @@ export const ImageProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       setSelectedStatus,
       selectedHashtag,
       setSelectedHashtag,
+      newPost,
+      setNewPost,
       clearAll }}>
       {children}
     </ImageContext.Provider>

@@ -91,6 +91,7 @@ export default function SignInScreen() {
 
   useEffect(() => {
     if (user) {
+
       router.push(`${LOCAL_URL}/(home)/`);
     }
   }, [user, router]);
@@ -172,18 +173,19 @@ export default function SignInScreen() {
 
   return (
     <View style={styles.container}>
-      <ReturnButton
-        onPress={() => {
-          if (currentStep === "password") {
-            setCurrentStep("input");
-            setButtonActive(userIdentifier.length > 0);
-            setError("");
-          } else {
-            router.push(`${LOCAL_URL}/sign-up`);
-          }
-        }}
-        page='login'
-      />
+        <ReturnButton
+          onPress={() => {
+            if (currentStep === "password") {
+              setCurrentStep("input");
+              setButtonActive(userIdentifier.length > 0);
+              setError("");
+            } else {
+              router.push(`${LOCAL_URL}/sign-up`);
+            }
+          }}
+          page='login'
+          has={currentStep === "input" ? false : true}
+        />
 
       <View style={styles.contentContainer}>
         <Title
@@ -214,11 +216,19 @@ export default function SignInScreen() {
         </View>
 
         {currentStep === "input" ? (
-          <SubButton
-            text={`Sử dụng ${typeUser === "email" ? "SĐT" : "email"}`}
-            setTypeUser={setTypeUser}
-            type={typeUser}
+          <View style={{ flexDirection: "column", gap: 10, width: "100%", alignItems: "center" }}>
+            <SubButton
+              text={`Sử dụng ${typeUser === "email" ? "SĐT" : "email"}`}
+              setTypeUser={setTypeUser}
+              type={typeUser}
+            />
+            <SubButton
+              text={`Đăng ký mới`}
+              setTypeUser={() => {}}
+              type={typeUser}
+              onPress={() => router.push(`${LOCAL_URL}/sign-up`)}
           />
+          </View>
         ) : (
           <SubButton
             text="Quên mật khẩu"

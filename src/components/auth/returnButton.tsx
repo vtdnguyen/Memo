@@ -19,9 +19,10 @@ import Animated, {
 interface ReturnButtonProps {
   onPress: () => void;
   page?: "login" | "signup";
+  has: boolean;
 }
 
-export default function ReturnButton({ onPress, page }: ReturnButtonProps) {
+export default function ReturnButton({ onPress, page, has }: ReturnButtonProps) {
   const [pageText] = useState(page === "login" ? "Đăng nhập" : "Đăng ký");
   const scale = useSharedValue(1);
   const opacity = useSharedValue(0);
@@ -47,6 +48,7 @@ export default function ReturnButton({ onPress, page }: ReturnButtonProps) {
 
   return (
     <Animated.View style={[styles.buttonContainer, animatedStyle]}>
+      {has && (
       <Pressable
         onPress={onPress}
         onPressIn={handlePressIn}
@@ -78,7 +80,7 @@ export default function ReturnButton({ onPress, page }: ReturnButtonProps) {
             fill="white"
           />
         </Svg>
-      </Pressable>
+      </Pressable>)}
       <View style={styles.pageTextContainer}>
         <Text style={styles.pageText}>{pageText}</Text>
       </View>
@@ -123,7 +125,7 @@ const styles = StyleSheet.create({
     backdropFilter: "blur(10px)",
   },
   pageText: {
-    fontSize: 16,
+    fontSize: 24,
     fontWeight: "600",
     color: "white",
     letterSpacing: 0.5,

@@ -227,11 +227,19 @@ export default function SignUpScreen() {
               />
               {error ? <Text style={styles.error}>{error}</Text> : null}
             </View>
-            <SubButton
-              text={`Sử dụng ${typeUser === "email" ? "SĐT" : "email"}`}
-              setTypeUser={setTypeUser}
-              type={typeUser}
-            />
+            <View style={{ flexDirection: "column", gap: 10, width: "100%", alignItems: "center" }}>
+              <SubButton
+                text={`Sử dụng ${typeUser === "email" ? "SĐT" : "email"}`}
+                setTypeUser={setTypeUser}
+                type={typeUser}
+              />
+              <SubButton
+                text={`Đăng nhập`}
+                setTypeUser={() => {}}
+                type={typeUser}
+                onPress={() => router.push(`${LOCAL_URL}/sign-in`)}
+              />
+            </View>
           </View>
         );
       case "password":
@@ -417,6 +425,8 @@ export default function SignUpScreen() {
               router.push(`${LOCAL_URL}/sign-in`);
             }
           }}
+          has={currentStep === "input" ? false : true}
+          page="signup"
         />
       )}
 

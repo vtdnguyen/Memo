@@ -6,7 +6,7 @@ export const formatTimeAgo = (time: string) => {
     const n = moment.duration(moment().diff(moment(time)));
         let timeAgoText = "";
         if (n.asSeconds() < 60) {
-          timeAgoText = `${n.seconds()} giây trước`;
+          timeAgoText = 'vừa đây' // `${n.seconds()} giây trước`;
         } else if (n.asMinutes() < 60) {
           timeAgoText = `${n.minutes()} phút trước`;
         } else if (n.asHours() < 24) {

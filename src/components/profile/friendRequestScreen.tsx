@@ -24,6 +24,7 @@ import moment from "moment";
 import { FriendRequest } from "@/src/types/friend";
 import { User } from "@/src/types/auth";
 import { formatTimeAgo } from "@/src/hooks/helper";
+import { Friend } from "@/src/types/message";
 
 interface FriendRequestScreenProps {
   onClose: () => void;
@@ -50,6 +51,7 @@ export const FriendRequestScreen: React.FC<FriendRequestScreenProps> = ({
   const searchBoxAnim = useRef(new Animated.Value(0)).current;
 
   const animationsInitialized = useRef(false);
+  const [friends, setFriends] = useState<Friend[]>([]);
 
   useEffect(() => {
     StatusBar.setBarStyle("light-content");
@@ -85,6 +87,38 @@ export const FriendRequestScreen: React.FC<FriendRequestScreenProps> = ({
       startShimmerAnimation();
       animationsInitialized.current = true;
     }
+  }, []);
+
+  useEffect(() => {
+
+    const fetchFriends = async () => {
+      const page = 1;
+      const limit = 10;
+      const keyword = "";
+      const response = await axios.get(
+        `${API_URL}/friend?page=${page}&limit=${limit}&keyword=${keyword}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        }
+      );
+      for (const friend of response.data.data) {
+        console.log("friend", friend);
+
+        setFriends((prev) => [
+          ...prev,
+          {
+            id: friend.friend.id,
+            name: friend.friend.username,
+            avatar: friend.friend.avatar.url,
+            unreadCount: 0,
+          },
+        ]);
+      }
+    };
+    fetchFriends();
   }, []);
 
   useEffect(() => {
@@ -515,6 +549,7 @@ export const FriendRequestScreen: React.FC<FriendRequestScreenProps> = ({
                     receivedRequests={receivedRequests}
                     setReceivedRequests={setReceivedRequests}
                     setSentRequests={setSentRequests}
+                    friends={friends}
                   />
                 )}
                 showsVerticalScrollIndicator={false}
@@ -574,6 +609,7 @@ export const FriendRequestScreen: React.FC<FriendRequestScreenProps> = ({
                     receivedRequests={receivedRequests}
                     setReceivedRequests={setReceivedRequests}
                     setSentRequests={setSentRequests}
+                    friends={friends}
                   />
                 )}
                 showsVerticalScrollIndicator={false}

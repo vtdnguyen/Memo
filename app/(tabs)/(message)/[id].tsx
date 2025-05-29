@@ -10,6 +10,7 @@ import {
   Platform,
   Image,
   ActivityIndicator,
+  Keyboard,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Ionicons, Feather } from "@expo/vector-icons";
@@ -21,6 +22,7 @@ import { formatTimeAgo } from "@/src/hooks/helper";
 import { useAppSelector } from "@/src/redux/hooks";
 import { RootState } from "@/src/redux/store";
 import { useSocketMessage } from "@/src/contexts/SocketContext";
+import EmojiSelector, { Categories } from "react-native-emoji-selector";
 
 // Mock messages for the chat - in a real app, you'd fetch these based on the friendId
 // const mockMessages: Message[] = [
@@ -64,15 +66,57 @@ export default function ChatScreen() {
   const socketMessage = useSocketMessage();
   const insets = useSafeAreaInsets();
 
-  const { messages, loading, error, sendMessage, isConnected, fetchMessages } =
-    useMessage(receiverId as string);
+  const {
+    messages,
+    loading,
+    error,
+    sendMessage,
+    isConnected,
+    fetchMessages,
+    setMessages,
+  } = useMessage(receiverId as string);
 
   const handleSend = () => {
     if (messageText.trim()) {
+      const newMessage: Message = {
+        id: Date.now().toString(),
+        content: messageText.trim(),
+        sender: currentUser!,
+        senderId: currentUser!.id,
+        receiverId: receiverId as string,
+        receiver: {
+          id: receiverId as string,
+          username: name as string,
+          avatarId: "temp",
+          email: "",
+          firstName: "",
+          lastName: "",
+          phoneNumber: "",
+          avatar: {
+            id: "temp",
+            url: avatar as string,
+            name: "avatar",
+            format: "image",
+            key: "temp",
+          },
+        },
+        createdAt: new Date().toISOString(),
+      };
+
       sendMessage(messageText.trim());
-      
+      setMessages((prev: Message[]) => [...prev, newMessage]);
       setMessageText("");
     }
+  };
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+  const toggleEmojiPicker = () => {
+    Keyboard.dismiss(); // close keyboard when emoji picker opens
+    setShowEmojiPicker(!showEmojiPicker);
+  };
+
+  const onEmojiSelected = (emoji: string) => {
+    setMessageText((prev) => prev + emoji);
   };
 
   const renderMessage = ({ item }: { item: Message }) => {
@@ -101,6 +145,12 @@ export default function ChatScreen() {
           {!isOwnMessage && (
             <Text style={styles.senderName}>{item.sender.username}</Text>
           )}
+          { item.fileUri &&
+            <Image 
+              source={{ uri: item.fileUri }} 
+              style={{ width: 200, height: 200 }} 
+            />
+           }
           <Text style={styles.messageContent}>{item.content}</Text>
           <Text style={styles.messageTime}>
             {formatTimeAgo(item.createdAt)}
@@ -199,6 +249,7 @@ export default function ChatScreen() {
             <TouchableOpacity
               style={styles.emojiButton}
               disabled={!isConnected}
+              onPress={toggleEmojiPicker}
             >
               <Feather name="smile" size={24} color={colors.grey} />
             </TouchableOpacity>
@@ -221,6 +272,16 @@ export default function ChatScreen() {
             />
           </TouchableOpacity>
         </View>
+        {/* Emoji Picker */}
+        {showEmojiPicker && (
+          <EmojiSelector
+            onEmojiSelected={onEmojiSelected}
+            showSearchBar={false}
+            showTabs={true}
+            showHistory={false}
+            category={Categories.all}
+          />
+        )}
       </KeyboardAvoidingView>
     </View>
   );
