@@ -130,7 +130,9 @@ export default function PhotoScreen() {
         mediaTypes: "images",
         allowsEditing: true,
         aspect: [1, 1],
-        quality: 0.7,
+        base64: false,
+        exif: false,
+        quality: 1,
         allowsMultipleSelection: false,
       });
 

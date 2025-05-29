@@ -10,14 +10,17 @@ interface SubButtonProps {
     setTypeUser: (type: 'email' | 'phone') => void;
     type: 'email' | 'phone' | 'password' | 'name';
     setCopiedLink?: (copiedLink: boolean) => void;
+    onPress?: () => void;
 }
 
-export default function SubButton({ text, setTypeUser, type, setCopiedLink }: SubButtonProps) {
+export default function SubButton({ text, setTypeUser, type, setCopiedLink, onPress }: SubButtonProps) {
     const user = useAppSelector(state => state.auth.user);
     
     const [sendPassword, setSendPassword] = useState(false);
     const handlePress = () => {
-        if (type === 'email') {
+        if (text === 'Đăng ký mới' || text === 'Đăng nhập') {
+            onPress?.();
+        } else if (type === 'email') {
             setTypeUser('phone');
         } else if (type === 'phone') {
             setTypeUser('email');

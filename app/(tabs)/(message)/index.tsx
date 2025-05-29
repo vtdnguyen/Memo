@@ -79,7 +79,7 @@ export default function MessageScreen() {
             id: friend.friend.id,
             name: friend.friend.username,
             avatar: friend.friend.avatar.url,
-            unreadCount: 0,
+            unreadCount: 0, // TODO: chỉnh database lưu chưa đọc
           }
         ]);
       }

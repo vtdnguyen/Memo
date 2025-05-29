@@ -4,6 +4,7 @@ import { TabBar } from "@/src/components/TabBar/TabBar";
 import { createContext, useState, useEffect, useCallback } from "react";
 import { useAppSelector } from "@/src/redux/hooks";
 import { colors } from "@/constants/Colors";
+import { ImageProvider } from "@/src/contexts/ImageContext";
 
 interface TabBarContextType {
   showTabBar: () => void;
@@ -65,6 +66,8 @@ export default function TabLayout() {
   }
 
   return (
+    <ImageProvider>
+
     <TabBarContext.Provider value={tabBarContextValue}>
       <View style={{ flex: 1 }}>
         <Tabs
@@ -105,5 +108,7 @@ export default function TabLayout() {
         </Tabs>
       </View>
     </TabBarContext.Provider>
+    </ImageProvider>
+
   );
 }

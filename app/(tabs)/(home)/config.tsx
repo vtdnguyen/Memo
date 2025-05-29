@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
   TextInput,
+  ToastAndroid,
 } from "react-native";
 import { useImageContext } from "@/src/contexts/ImageContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -31,6 +32,8 @@ import { API_URL } from "@/src/redux/slices/authSlice";
 import { useDispatch } from "react-redux";
 import { completeOnboarding } from "@/src/redux/slices/onboardingSlice";
 import * as FileSystem from "expo-file-system";
+import { ImageManipulator } from "expo-image-manipulator";
+
 
 // Define proper types
 interface Friend {
@@ -82,7 +85,7 @@ const COLOR_TIMING_CONFIG = {
 
 export default function ConfigScreen(): React.ReactNode {
   const router = useRouter();
-  const { capturedImage, selectedStatus, selectedHashtag, clearAll } =
+  const { capturedImage, selectedStatus, selectedHashtag, setNewPost, clearAll } =
     useImageContext();
   const insets = useSafeAreaInsets();
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
@@ -105,6 +108,7 @@ export default function ConfigScreen(): React.ReactNode {
   const prevSelectedFriends = useRef<string[]>([]);
   const prevSelectedGroups = useRef<string[]>([]);
   const prevEveryoneSelected = useRef<boolean>(false);
+  
 
   // Reference to hold items that need animation
   const animatingItems = useRef<Set<string>>(new Set());
@@ -451,19 +455,6 @@ export default function ConfigScreen(): React.ReactNode {
     }
 
     try {
-      // Kiểm tra kích thước file
-      // const fileInfo = await FileSystem.getInfoAsync(capturedImage);
-      // if (!fileInfo.exists) {
-      //   Alert.alert("Lỗi", "Không tìm thấy file ảnh");
-      //   return;
-      // }
-
-      // const fileSize = fileInfo.size || 0;
-      // if (fileSize > 5 * 1024 * 1024) {
-      //   // 5MB
-      //   Alert.alert("Lỗi", "Kích thước ảnh quá lớn (tối đa 5MB)");
-      //   return;
-      // }
 
       let response = await fetch(capturedImage);
       console.log("response", response);
@@ -504,8 +495,14 @@ export default function ConfigScreen(): React.ReactNode {
         console.log("response", response);
 
         // Reset context và chuyển màn hình
+        setNewPost(capturedImage)
         clearAll();
-        router.replace("/(tabs)");
+        // popup posted
+        // ToastAndroid.show("Đã gửi", ToastAndroid.SHORT);
+        setTimeout(() => {
+          router.replace("/(tabs)");
+        }, 1000);
+
       } catch (error: any) {
         console.error("Error details:", error.response?.data);
         Alert.alert(

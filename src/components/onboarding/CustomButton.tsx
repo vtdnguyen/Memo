@@ -124,7 +124,7 @@ const CustomButton = ({ flatListRef, flatListIndex, dataLength, x }: Props) => {
         style={[styles.container, buttonAnimationStyle, animatedColor]}
       >
         <Animated.Text style={[styles.textButton, textAnimationStyle]}>
-          Get Started
+          Bắt đầu
         </Animated.Text>
         <Animated.Image
           source={require("@/assets/onboarding/ArrowIcon.png")}

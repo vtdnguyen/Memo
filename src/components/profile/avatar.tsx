@@ -51,8 +51,10 @@ export default function Avatar({ onPress }: { onPress: () => void }) {
         mediaTypes: "images",
         allowsEditing: true,
         aspect: [1, 1],
-        quality: 0.7,
+        quality: 1,
         allowsMultipleSelection: false,
+        exif: false,
+        base64: false,
       });
 
 

@@ -5,6 +5,7 @@ import { colors, styles } from "./styles";
 
 import { User } from "@/src/types/auth";
 import { FriendRequest } from "@/src/types/friend";
+import { Friend } from "@/src/types/message";
 
 interface UserItemProps {
   item: User;
@@ -16,6 +17,7 @@ interface UserItemProps {
   setSentRequests: React.Dispatch<React.SetStateAction<User[]>>;
   receivedRequests: FriendRequest[];
   setReceivedRequests: React.Dispatch<React.SetStateAction<FriendRequest[]>>;
+  friends: Friend[];
 }
 
 export const UserItem: React.FC<UserItemProps> = ({
@@ -28,11 +30,13 @@ export const UserItem: React.FC<UserItemProps> = ({
   receivedRequests,
   setSentRequests,
   setReceivedRequests,
+  friends,
 }) => {
   const avatar = item.avatar ? item.avatar.url : defaultAvatar.avatarUrl;
 
   const isReceived = receivedRequests.some((req) => req.sender.id === item.id);
   const isSent = sentRequests.some((req) => req.id === item.id) && !isReceived;
+  const isFriend = friends.some((friend) => friend.id === item.id);
 
   return (
     <Animated.View
@@ -62,7 +66,7 @@ export const UserItem: React.FC<UserItemProps> = ({
           </TouchableOpacity>
         </View>
       )}
-      {!isSent && !isReceived && (
+      {!isSent && !isReceived && !isFriend && (
         <View style={styles.receivedRequest as StyleProp<ViewStyle>}>
           <TouchableOpacity
             onPress={() => {
@@ -81,6 +85,13 @@ export const UserItem: React.FC<UserItemProps> = ({
         <View style={[styles.receivedRequest as StyleProp<ViewStyle>, {backgroundColor: colors.borderColor}]}>
           <Text style={styles.receivedRequestText as StyleProp<TextStyle>}>
             Đã nhận lời mời
+          </Text>
+        </View>
+      )}
+      {isFriend && (
+        <View style={[styles.receivedRequest as StyleProp<ViewStyle>, {backgroundColor: colors.borderColor}]}>
+          <Text style={styles.receivedRequestText as StyleProp<TextStyle>}>
+            Đã là bạn
           </Text>
         </View>
       )}

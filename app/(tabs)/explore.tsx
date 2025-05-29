@@ -14,10 +14,14 @@ import {
   Dimensions,
   FlatList,
   ViewToken,
+  TextInput,
+  Alert,
+  ActivityIndicator,
+  ToastAndroid
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
-import { Friend } from "@/src/types/message";
+import { Friend, Message } from "@/src/types/message";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/constants/Colors";
 import CustomButton from "@/src/components/home/IconButton";
@@ -27,7 +31,11 @@ import FriendModal from "@/src/components/modal/FriendModal";
 import { formatTimeAgo, getUserProfileLink } from "@/src/hooks/helper";
 import { useSelector } from "react-redux";
 import { RootState } from "@/src/redux/store";
-
+import { useMessage } from "@/src/hooks/useMessage";
+import { useSocketMessage } from "@/src/contexts/SocketContext";
+import { useAppSelector } from "@/src/redux/hooks";
+import { Post } from '@/src/types/message'
+import { useImageContext } from "@/src/contexts/ImageContext";
 // Mock data for posts
 // const POSTS = [
 //   {
@@ -70,16 +78,7 @@ import { RootState } from "@/src/redux/store";
 // ];
 
 // Types
-interface Post {
-  id: string;
-  imageUrl: string;
-  user: {
-    name: string;
-    avatar: string;
-  };
-  timePosted: string;
-  hashtag?: string;
-}
+
 
 interface ViewableItemsChanged {
   viewableItems: Array<ViewToken>;
@@ -97,6 +96,13 @@ export default function ExploreScreen(): React.JSX.Element {
   const flatListRef = useRef<FlatList>(null);
   const insets = useSafeAreaInsets();
   const [POSTS, setPOSTS] = useState<Post[]>([]);
+  const [messageText, setMessageText] = useState('');
+  const handleAddEmoji = (emoji: string) => {
+    setMessageText((prev) => prev + emoji);
+  };
+  const [receiverId, setReceiverId] = useState<string | null>(null);
+  const { newPost, setNewPost } = useImageContext();
+  
 
   // Calculate the square image size (70% of screen width, maintaining 1:1 ratio)
   const imageSize = screenWidth * 1;
@@ -117,23 +123,35 @@ export default function ExploreScreen(): React.JSX.Element {
       const data = await response.json();
       console.log("data", data);
 
-      for (const post of data.data) {
-        setPOSTS((prevPosts) => [
-          ...prevPosts,
-          {
-            id: post.id,
-            imageUrl: post.fileAttach.url,
-            user: {
-              name: post.owner.firstName + " " + post.owner.lastName,
-              avatar: post.owner.avatar.url,
-            },
-            timePosted: formatTimeAgo(post.createdAt),
-          },
-        ]);
-      }
+      const formatted = data.data.map((post: any) => ({
+        id: post.id,
+        imageUrl: post.fileAttach.url,
+        user: {
+          id: post.owner.id,
+          name: post.owner.firstName + " " + post.owner.lastName,
+          avatar: post.owner.avatar.url,
+        },
+        timePosted: formatTimeAgo(post.createdAt),
+        title: post.title,
+      }));
+  
+      setPOSTS(formatted);
+
     };
     fetchPosts();
-  }, []);
+    setNewPost(null);
+  }, [newPost]);
+
+  // useEffect(() => {
+  //   if (!(!POSTS.length || !POSTS[currentIndex]?.user?.id)) {
+  //     setReceiverId(POSTS[currentIndex].user.id)
+  //   }
+  // }, [POSTS, currentIndex]);
+
+  // if (!receiverId) {
+  //   return <ActivityIndicator />
+  // }
+  
 
   const onViewableItemsChanged = ({ viewableItems }: ViewableItemsChanged) => {
     if (viewableItems.length > 0) {
@@ -154,28 +172,45 @@ export default function ExploreScreen(): React.JSX.Element {
     router.push("/(tabs)/(message)");
   };
 
-  const renderPost = ({ item }: { item: Post }) => (
+
+  const renderPost = ({ item }: { item: Post }) => {
+    console.log('item', item);
+    return (
     <View
       style={[
         styles.postContainer,
-        { height: itemHeight, paddingTop: itemHeight / 4 },
+        { height: itemHeight, paddingTop: itemHeight / 5 },
       ]}
     >
+      
       <View
         style={[styles.imageContainer, { width: imageSize, height: imageSize }]}
       >
-        <Image source={{ uri: item.imageUrl }} style={styles.postImage} />
-        <View style={styles.userInfoContainer}>
-          <Image source={{ uri: item.user.avatar }} style={styles.avatar} />
-          <View style={styles.userTextInfo}>
-            <Text style={styles.userName}>{item.user.name}</Text>
-            <Text style={styles.timePosted}>{item.timePosted}</Text>
-          </View>
+        <Image source={{ uri: item.imageUrl }} width={imageSize} height={imageSize} resizeMode="contain" style={styles.postImage} />
+        <Text
+          style={[
+            styles.title,
+            {
+              left: screenWidth / 2,
+              transform: [{ translateX: '-50%' }],
+            },
+          ]}
+        >
+          {item.title}
+        </Text>
+      </View>
+
+      <View style={styles.userInfoContainer}>
+        <Image source={{ uri: item.user.avatar }} style={styles.avatar} />
+        <View style={styles.userTextInfo}>
+          <Text style={styles.userName}>{item.user.name}</Text>
+          <Text style={styles.timePosted}>{item.timePosted}</Text>
         </View>
       </View>
-      {item.hashtag && <Text style={styles.title}>{item.hashtag}</Text>}
+      {/* {item.hashtag && <Text style={styles.title}>{item.hashtag}</Text>} */}
     </View>
-  );
+    );
+  };
 
   const fetchFriends = async () => {
     // Simulate network request
@@ -259,6 +294,72 @@ export default function ExploreScreen(): React.JSX.Element {
     return result;
   };
 
+  console.log('current index', currentIndex);
+  const currentUser = useAppSelector((state: RootState) => state.auth.user);
+  const socketMessage = useSocketMessage();
+
+  // const {
+  //   messages,
+  //   loading,
+  //   error,
+  //   sendMessage,
+  //   isConnected,
+  //   fetchMessages,
+  //   setMessages,
+  // } = useMessage(receiverId);
+
+
+
+  const sendPostMessage = () => {
+    if (messageText.trim() === '') return
+    console.log('messageText: ', messageText);
+
+    const currentPost = POSTS[currentIndex];
+    if (!currentPost || !user) return;
+
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      content: messageText.trim(),
+      sender: user,
+      senderId: user.id,
+      receiverId: currentPost.user.id,
+      receiver: {
+        id: currentPost.user.id,
+        username: currentPost.user.name,
+        avatarId: "temp",
+        email: "",
+        firstName: "",
+        lastName: "",
+        phoneNumber: "",
+        avatar: {
+          id: "temp",
+          url: currentPost.user.avatar,
+          name: "avatar",
+          format: "image",
+          key: "temp",
+        },
+      },
+      createdAt: new Date().toISOString(),
+      fileUri: currentPost.imageUrl,
+    };
+
+    if (currentPost.user.id === currentUser?.id) {
+      Alert.alert('Cảnh báo', 'Không thể gửi tin cho chính bạn')
+      return
+    }
+
+    socketMessage?.emit("send-message", {
+      receiverId: currentPost.user.id,
+      content: messageText.trim(),
+      fileUri: currentPost.imageUrl,
+    });
+    // setMessages((prev: Message[]) => [...prev, newMessage]);
+
+    setMessageText("");
+    // ToastAndroid.show("Đã gửi tin nhắn", ToastAndroid.SHORT);
+  };
+  
+
   return (
     <View style={[styles.container]}>
       <StatusBar style="light" />
@@ -325,26 +426,47 @@ export default function ExploreScreen(): React.JSX.Element {
           { paddingBottom: insets.bottom + 70 },
         ]}
       >
-        <TouchableOpacity style={styles.messageInputButton}>
-          <Text style={styles.messageInputPlaceholder}>Send a message...</Text>
+        <TouchableOpacity style={styles.messageInputButton} activeOpacity={1}>
+          <TextInput
+            style={styles.messageInputPlaceholder}
+            placeholder="Nói gì đi..."
+            placeholderTextColor='gray'
+            keyboardType="default"
+            value={messageText}
+            onChangeText={setMessageText}
+          />
+
           <View style={styles.reactionContainer}>
-            <MaterialIcons
-              name="favorite"
-              size={20}
-              color="#FF4D67"
-              style={styles.reactionIcon}
-            />
-            <MaterialIcons
-              name="local-fire-department"
-              size={20}
-              color="#FF8A00"
-              style={styles.reactionIcon}
-            />
-            <MaterialIcons
-              name="emoji-emotions"
-              size={20}
-              color="#FFD600"
-              style={styles.reactionIcon}
+            <TouchableOpacity onPress={() => handleAddEmoji('❤️')}>
+              <MaterialIcons
+                name="favorite"
+                size={20}
+                color="#FF4D67"
+                style={styles.reactionIcon}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => handleAddEmoji('🔥')}>
+              <MaterialIcons
+                name="local-fire-department"
+                size={20}
+                color="#FF8A00"
+                style={styles.reactionIcon}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => handleAddEmoji('😊')}>
+              <MaterialIcons
+                name="emoji-emotions"
+                size={20}
+                color="#FFD600"
+                style={styles.reactionIcon}
+              />
+            </TouchableOpacity>
+            <Ionicons
+              name="send"
+              size={24}
+              onPress={sendPostMessage}
+              style={{ paddingLeft: 10 }}
+              color={messageText.trim() === '' ? 'gray' : 'cyan'}
             />
           </View>
         </TouchableOpacity>
@@ -422,7 +544,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#dfdfdf",
     fontStyle: "italic",
-    paddingTop: 10,
+    position: 'absolute',
+    bottom: 10,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 100,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    padding: 10,
+    borderRadius: 16,
   },
   imageContainer: {
     borderRadius: 50,
@@ -435,11 +565,14 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   userInfoContainer: {
-    position: "absolute",
-    bottom: 16,
-    left: 16,
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
+    justifyContent: 'center',
+    position: 'absolute',
+    bottom: 250,
+    left: 10,
+    padding: 10,
+    zIndex: 1000,
   },
   avatar: {
     width: 36,
@@ -479,8 +612,10 @@ const styles = StyleSheet.create({
     height: 60,
   },
   messageInputPlaceholder: {
-    color: "rgba(255, 255, 255, 0.5)",
+    color: "rgba(255, 255, 255, 1)",
     fontSize: 16,
+    flex: 1,
+    padding: 10,
   },
   reactionContainer: {
     flexDirection: "row",

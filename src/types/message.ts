@@ -15,4 +15,18 @@ export interface Message {
   receiverId: string;
   sender: User;
   receiver: User;
+  fileUri?: string;
+}
+
+export interface Post {
+  id: string;
+  imageUrl: string;
+  user: {
+    id: string;
+    name: string;
+    avatar: string;
+  };
+  timePosted: string;
+  title: string;
+  hashtag?: string;
 }
