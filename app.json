@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "test",
-    "slug": "test",
+    "name": "Memo",
+    "slug": "Memo",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "test",
+    "icon": "./assets/images/memo.png",
+    "scheme": "Memo",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -13,10 +13,11 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/memo.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.khoahotran.memo"
     },
     "web": {
       "bundler": "metro",
@@ -28,15 +29,27 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/memo.png",
           "imageWidth": 200,
-          "resizeMode": "contain",
+          "resizeMode": "cover",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "expo-font",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "0fd2ec35-0aee-4158-abfa-0c697c28c735"
+      }
+    },
+    "owner": "khoahotran",
+    "updates": {
+      "enabled": false
     }
   }
 }
