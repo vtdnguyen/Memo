@@ -455,78 +455,86 @@ export default function ConfigScreen(): React.ReactNode {
       Alert.alert("Lỗi", "Không tìm thấy ảnh");
       return;
     }
-    if (title === "") {
-      console.log("khong co title");
-    }
-
+  
     try {
-      let response = await fetch(capturedImage);
-      console.log("response", response);
-      const blob = await response.blob();
-
-      console.log("blob", blob);
-
-      if (blob.size > MAX_FILE_SIZE) {
-        Alert.alert("Lỗi", "Kích thước ảnh không được vượt quá 5MB", [
-          { text: "OK" },
-        ]);
+      setLoading(true);
+  
+      // Kiểm tra kích thước file trước khi upload
+      const fileInfo = await FileSystem.getInfoAsync(capturedImage);
+      console.log('File info:', fileInfo);
+      
+      if (fileInfo.exists && fileInfo.size && fileInfo.size > MAX_FILE_SIZE) {
+        Alert.alert("Lỗi", "Kích thước ảnh không được vượt quá 5MB");
+        setLoading(false);
         return;
       }
-      setLoading(true);
-
-      // Tạo FormData
+  
+      // Tạo FormData cho React Native
       const formData = new FormData();
-      const file = new File([blob], "image.jpg", { type: blob.type || "image/jpeg" });
-      formData.append("file", file);
-      // formData.append("file", blob, `image.jpg`);
+      
+      // Thêm file vào FormData - cách đúng cho React Native
+      formData.append('file', {
+        uri: capturedImage,
+        type: 'image/jpeg', // hoặc 'image/png' tùy theo file
+        name: 'image.jpg',
+      } as any);
+  
+      // Thêm title nếu có
       if (title !== "") {
         formData.append("title", title);
       }
-
+  
       console.log("FormData content:", {
-        file: blob,
+        uri: capturedImage,
         title: title,
-        formData: formData,
       });
-
+  
       // Gửi request
-      try {
-        response = await axios.post(`${API_URL}/post`, formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-          withCredentials: true,
-        });
-
-        console.log("response", response);
-
-        setNewPost(capturedImage);
-        // Reset context và chuyển màn hình
-        clearAll();
-        // popup posted
-        // ToastAndroid.show("Đã gửi", ToastAndroid.SHORT);
-        setTimeout(() => {
-          router.replace("/(tabs)");
-        }, 1000);
-      } catch (error: any) {
-        console.error("Axios Error", {
-          message: error.message,
-          response: error.response,
-          request: error.request,
-        });
-        Alert.alert(
-          "Lỗi",
-          error.response?.data?.message ||
-            "Không thể tải ảnh lên. Vui lòng thử lại"
-        );
-      } finally {
-        setLoading(false);
+      const response = await axios.post(`${API_URL}/post`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          // Không cần set boundary manually, axios sẽ tự động set
+        },
+        withCredentials: true,
+        timeout: 30000, // 30 seconds timeout
+      });
+  
+      console.log("Upload response:", response.data);
+  
+      setNewPost(capturedImage);
+      clearAll();
+      
+      // Hiển thị thông báo thành công
+      ToastAndroid.show("Đã gửi thành công!", ToastAndroid.SHORT);
+      
+      setTimeout(() => {
+        router.replace("/(tabs)");
+      }, 1000);
+  
+    } catch (error: any) {
+      console.error("Upload Error:", error);
+      
+      let errorMessage = "Không thể tải ảnh lên. Vui lòng thử lại";
+      
+      if (error.response) {
+        // Server responded with error status
+        console.log("Error response:", error.response.data);
+        errorMessage = error.response.data?.message || errorMessage;
+      } else if (error.request) {
+        // Request was made but no response received
+        console.log("Network error:", error.request);
+        errorMessage = "Lỗi kết nối mạng. Vui lòng kiểm tra internet";
+      } else {
+        // Something else happened
+        console.log("Other error:", error.message);
       }
-    } catch (error) {
-      console.error(error);
-      Alert.alert("Lỗi", "Không thể tải ảnh lên. Vui lòng thử lại");
+      
+      Alert.alert("Lỗi", errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
+
   useEffect(() => {
     console.log("capturedImage", capturedImage);
     setLoading(false);
@@ -550,7 +558,7 @@ export default function ConfigScreen(): React.ReactNode {
     <View
       style={[
         styles.container,
-        { paddingTop: insets.top + 10, paddingBottom: insets.bottom },
+        { paddingTop: insets.top + 20, paddingBottom: insets.bottom },
       ]}
     >
       <StatusBar style="light" />
@@ -588,7 +596,7 @@ export default function ConfigScreen(): React.ReactNode {
         </TouchableOpacity> */}
       </View>
 
-      <View style={styles_fix.chooseSharing}>
+      {/* <View style={styles_fix.chooseSharing}>
         <Text style={styles_fix.shareText}>Chia sẻ với</Text>
 
         <ScrollView
@@ -597,13 +605,11 @@ export default function ConfigScreen(): React.ReactNode {
           style={styles_fix.scrollContainer}
           contentContainerStyle={styles_fix.scrollContent}
         >
-          {/* Everyone option */}
           <EveryoneButton
             isSelected={everyoneSelected}
             onPress={toggleEveryoneSelection}
           />
 
-          {/* Regular friends */}
           {friends.map((friend: Friend) => (
             <FriendItem
               key={friend.id}
@@ -614,7 +620,7 @@ export default function ConfigScreen(): React.ReactNode {
           ))}
         </ScrollView>
 
-        {/* <Text style={styles_fix.shareText}>hoặc nhóm:</Text> */}
+        <Text style={styles_fix.shareText}>hoặc nhóm:</Text>
 
         <ScrollView
           horizontal
@@ -631,7 +637,7 @@ export default function ConfigScreen(): React.ReactNode {
             />
           ))}
         </ScrollView>
-      </View>
+      </View> */}
 
       <TextInput
         style={styles_fix.input}
@@ -771,5 +777,6 @@ const styles_fix = StyleSheet.create({
     marginBottom: 20,
     color: colors.black,
     marginHorizontal: 20,
+    marginTop: 60,
   },
 });

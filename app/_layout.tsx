@@ -29,13 +29,9 @@ const RootLayoutNav = () => {
 export default function RootLayout() {
   StatusBar.setTranslucent(true);
   StatusBar.setBackgroundColor("transparent");
-  SplashScreen.preventAutoHideAsync();
-
+  
   useEffect(() => {
-    const hideSplashScreen = async () => {
-      await SplashScreen.hideAsync();
-    };
-    hideSplashScreen();
+    SplashScreen.preventAutoHideAsync();
   }, []);
 
   return (

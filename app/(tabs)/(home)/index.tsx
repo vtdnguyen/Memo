@@ -115,41 +115,29 @@ export default function PhotoScreen() {
   const takePicture = async () => {
     if (!cameraRef.current || capturedImage) return;
     try {
-      
       console.log('takePicture');
       console.log('cameraRef.current:', cameraRef.current);
-
+  
+      const photo = await cameraRef.current.takePictureAsync({
+        quality: 1,
+        shutterSound: false, // tiếng lớn vãi
+        base64: false,
+        skipProcessing: false,
+      });
       
-      const photo = await cameraRef.current.takePictureAsync();
       console.log('photo', photo);
       
-      if (!photo) {
+      if (!photo || !photo.uri) {
         Alert.alert("Error", "No photo captured");
         return;
       }
-      // const { uri, width, height } = photo;
-      // const size = Math.min(width, height);
-      // // Crop to center square
-      // const manipResult = await ImageManipulator.manipulateAsync(
-      //   uri,
-      //   [{
-      //     crop: {
-      //       originX: (width - size) / 2,
-      //       originY: (height - size) / 2,
-      //       width: size,
-      //       height: size,
-      //     }
-      //   }],
-      //   { format: ImageManipulator.SaveFormat.PNG, compress: 1 }
-      // );
       
       setCapturedImage(photo.uri);
-      // cropImage();
-
-      // router.push("/(tabs)/(home)/config");
+      console.log('Photo saved with URI:', photo.uri);
+      
     } catch (e) {
-      console.error(e);
-      Alert.alert("Error", "Could not take picture");
+      console.error('Error taking picture:', e);
+      Alert.alert("Error", "Could not take picture: " + e);
     }
   };
 
@@ -232,6 +220,7 @@ export default function PhotoScreen() {
       </View>
 
       <View style={styles.previewContainer}>
+        
         <CameraView
           ref={cameraRef}
           style={styles.camera}
@@ -239,6 +228,7 @@ export default function PhotoScreen() {
           flash={flashMode}
           zoom={zoom}
           mirror={true}
+          mute={true}
         />
         {capturedImage && (
           <Image
@@ -275,12 +265,9 @@ export default function PhotoScreen() {
             justifyContent: "center",
             alignItems: "center",
             flexDirection: "row",
-            gap: 10,
+            gap: 20,
+            marginTop: 20,
             width: "100%",
-            position: "absolute",
-            bottom: 100,
-            left: 0,
-            right: 0,
             zIndex: 1000,
           }}
         >

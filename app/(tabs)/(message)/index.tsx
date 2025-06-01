@@ -60,6 +60,7 @@ export default function MessageScreen() {
   const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
   const pathname = usePathname();
+  const [loading, setLoading] = useState(false)
   useEffect(() => {
     const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
       setTabBarVisible(false);
@@ -82,7 +83,9 @@ export default function MessageScreen() {
   const [friends, setFriends] = useState<Friend[]>([]);
 
   useEffect(() => {
+    try {
     const fetchFriends = async () => {
+      setLoading(true)
       const page = 1;
       const limit = 10;
       const keyword = "";
@@ -110,6 +113,12 @@ export default function MessageScreen() {
       }
     };
     fetchFriends();
+  } catch (e) {
+    console.log(e);
+    
+  } finally {
+    setLoading(false)
+  }
   }, []);
 
   const handleFriendPress = (friend: Friend) => {
@@ -194,17 +203,17 @@ export default function MessageScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
-      /> : <View
-      style={{
-        position: 'absolute',
-        top: screenHeight / 2,
-        left: 0,
-        right: 0,
-        alignItems: 'center',
-      }}
-    >
-      <Text style={{ color: 'white' }}>Tìm thêm bạn mới đi</Text>
-    </View>}
+      /> :  <View
+              style={{
+                position: 'absolute',
+                top: screenHeight / 2,
+                left: 0,
+                right: 0,
+                alignItems: 'center',
+              }}
+            >
+              <Text style={{ color: 'white' }}>Tìm thêm bạn mới đi</Text>
+            </View>}
     </View>
   );
 }

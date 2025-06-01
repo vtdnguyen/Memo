@@ -5,10 +5,11 @@ import Avatar from "@/src/components/profile/avatar";
 import { useAppDispatch, useAppSelector } from "@/src/redux/hooks";
 import { logout } from "@/src/redux/slices/authSlice";
 import { RootState } from "@/src/redux/store";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Dimensions } from "react-native";
 // import { Mail, User, Send, CircleAlert, LogOut, Trash2, TriangleAlert } from 'lucide-react-native'
 import { Feather } from "@expo/vector-icons";
+import {  TabBarContext } from "../_layout";
 
 import ProfileFunction from "@/src/components/profile/profileFunction";
 import { FriendRequestScreen } from "@/src/components/profile/friendRequestScreen";
@@ -21,6 +22,8 @@ import { SendReport } from "@/src/components/profile/sendReport";
 import { LogoutPopup } from "@/src/components/profile/logout";
 
 export default function ProfileScreen() {
+  const { hideTabBar, showTabBar } = useContext(TabBarContext);
+
   const { height } = Dimensions.get('window');
   const screenHeight = height - 90;
 
@@ -32,7 +35,8 @@ export default function ProfileScreen() {
   const [reportVisible, setReportVisible] = useState(false);
 
   const [logoutVisible, setLogoutVisible] = useState(false);
-  
+
+
   const handleOpenFriendRequest = () => {
     setFriendRequestVisible(true);
   };

@@ -125,6 +125,11 @@ export default function SignUpScreen() {
           setError("Tên họ không được sử dụng ký tự đặc biệt và chữ số");
           isValid = false;
         }
+        const usernameRegex = /^[a-zA-Z0-9_]{3,}$/;
+        if (!usernameRegex.test(username)) {
+          setError("Tên người dùng không hợp lệ");
+          isValid = false;
+        }
 
         if (isValid) {
           if (typeUser === "email") {
@@ -142,7 +147,7 @@ export default function SignUpScreen() {
           } else {
             setError("");
             const data = {
-              phoneNumber: "+84" + userIdentifier[0] === '0' ? userIdentifier.slice(1) : userIdentifier,
+              phoneNumber: "+84" + (userIdentifier[0] === "0" ? userIdentifier.slice(1) : userIdentifier),
               password,
               firstName,
               lastName,

@@ -46,15 +46,11 @@ export default function SignInScreen() {
   const inputRef = useRef<TextInput>(null)
   const passwordRef = useRef<TextInput>(null)
 
-  const prepareApp = useCallback(async () => {
+  useEffect(() => {
     if (fontsLoaded) {
-      await SplashScreen.hideAsync();
+      SplashScreen.hideAsync();
     }
   }, [fontsLoaded]);
-
-  useEffect(() => {
-    prepareApp();
-  }, [prepareApp]);
 
   const handleGetUser = useCallback(async () => {
     try {
@@ -87,7 +83,7 @@ export default function SignInScreen() {
   useEffect(() => {
     const checkPersistedStorage = async () => {
       const data = await AsyncStorage.getItem("persist:root");
-      // console.log("AsyncStorage:", data);
+      console.log("AsyncStorage:", data);
     };
     checkPersistedStorage();
   }, []);
@@ -148,7 +144,7 @@ export default function SignInScreen() {
           account:
             typeUser === "email"
               ? userIdentifier
-              : "+84" + userIdentifier[0] === '0' ? userIdentifier.slice(1) : userIdentifier,
+              : "+84" + (userIdentifier[0] === '0' ? userIdentifier.slice(1) : userIdentifier),
           password,
         });
         setError("");
@@ -167,7 +163,8 @@ export default function SignInScreen() {
     typeUser,
     handleLogin,
   ]);
-  if (user) {
+  
+  if (isAuthenticated) {
     return <Redirect href="/(tabs)/(home)" />;
   }
   
@@ -178,9 +175,7 @@ export default function SignInScreen() {
       </View>
     );
   }
-  if (isLoggedIn) {
-    return <Redirect href="/(tabs)/(home)" />;
-  }
+
   
 
   return (

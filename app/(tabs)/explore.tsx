@@ -154,6 +154,7 @@ export default function ExploreScreen(): React.JSX.Element {
         }));
   
         setPOSTS(formatted);
+        setNewPost(null);
       } catch (error) {
         console.error("Error fetching posts:", error);
       } finally {
@@ -162,8 +163,7 @@ export default function ExploreScreen(): React.JSX.Element {
     };
   
     fetchPosts();
-    setNewPost(null);
-  }, [newPost, setNewPost]);
+  }, []);
   
 
 

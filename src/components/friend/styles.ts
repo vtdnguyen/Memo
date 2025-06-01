@@ -42,6 +42,7 @@ export const styles = StyleSheet.create<Styles>({
     borderBottomRightRadius: 20,
     marginHorizontal: -16,
     paddingHorizontal: 16,
+    marginTop: 20,
   },
   header: {
     flexDirection: "row",
@@ -94,35 +95,38 @@ export const styles = StyleSheet.create<Styles>({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.1)",
+    gap: 10,
   },
   searchIcon: {
     marginRight: 10,
+    backgroundColor: "transparent"
   },
   input: {
     flex: 1,
     color: colors.white,
     fontSize: 16,
+    lineHeight: 28,
     paddingVertical: 14,
     paddingLeft: 10,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "transparent",
     backgroundColor: "transparent",
-    includeFontPadding: false,
-    textAlignVertical: "top",
+    // includeFontPadding: false,
+    textAlignVertical: "center",
   },
   clearButton: {
     padding: 8,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    // backgroundColor: "rgba(255, 255, 255, 0.1)",
     borderRadius: 20,
-    margin: 10,
+    marginHorizontal: 10,
   },
   tabContainer: {
     flexDirection: "row",
     marginVertical: 16,
     borderRadius: 12,
     backgroundColor: "rgba(255, 255, 255, 0.05)",
-    padding: 4,
+    padding: 0,
     position: "relative",
     height: 50,
     borderWidth: 1,
@@ -137,8 +141,8 @@ export const styles = StyleSheet.create<Styles>({
   },
   tabIndicator: {
     position: "absolute",
-    top: 2,
-    width: "48%",
+    top: 1,
+    width: "46%",
     height: "95%",
     borderRadius: 8,
     zIndex: 0,
@@ -147,6 +151,7 @@ export const styles = StyleSheet.create<Styles>({
     color: colors.lightGray,
     fontWeight: "500",
     fontSize: 14,
+    margin: 2
   },
   activeTabText: {
     color: colors.white,
@@ -366,7 +371,9 @@ export const styles = StyleSheet.create<Styles>({
     marginBottom: 400,
   },
   emptyIcon: {
+    marginTop: 150,
     marginBottom: 16,
+    height: 120
   },
   emptyText: {
     color: colors.white,

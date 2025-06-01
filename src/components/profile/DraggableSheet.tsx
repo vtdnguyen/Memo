@@ -1,5 +1,5 @@
 import { View, StyleSheet, Dimensions } from "react-native";
-import React, { useContext, useEffect } from "react";
+import React, { useContext, useEffect, useRef } from "react";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   useAnimatedStyle,
@@ -10,7 +10,7 @@ import Animated, {
   interpolate,
   runOnJS,
 } from "react-native-reanimated";
-import {  TabBarContext } from "../../../app/(tabs)/_layout";
+import { TabBarContext } from "../../../app/(tabs)/_layout";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 const DRAG_DISMISS_THRESHOLD = SCREEN_HEIGHT * 0.35;
@@ -30,43 +30,76 @@ type Props = {
   children: React.ReactNode;
 };
 
-
 export const DraggableSheet: React.FC<Props> = ({ onClose, children }) => {
   const translateY = useSharedValue(0);
   const active = useSharedValue(false);
-  const { hideTabBar, showTabBar } = useContext(TabBarContext);
-
+  const tabBarContext = useContext(TabBarContext);
   
+  // Sử dụng ref để tránh crash khi component unmount
+  const isMountedRef = useRef(true);
   const translateYOnMount = useSharedValue(SCREEN_HEIGHT);
   
   useEffect(() => {
     translateYOnMount.value = withSpring(0, SPRING_CONFIG);
-    hideTabBar()
+    tabBarContext?.hideTabBar?.();
+    
+    // Cleanup khi component unmount
+    return () => {
+      isMountedRef.current = false;
+      // Chỉ show tab bar nếu component vẫn còn mounted và context tồn tại
+      try {
+        if (tabBarContext?.showTabBar) {
+          tabBarContext.showTabBar();
+        }
+      } catch (error) {
+        console.log('Error in cleanup:', error);
+      }
+    };
   }, []);
+
+  const totalTranslateY = useDerivedValue(() => {
+    return translateY.value + translateYOnMount.value;
+  });
 
   const opacity = useDerivedValue(() => {
     return interpolate(
-      translateY.value,
+      totalTranslateY.value,
       [0, DRAG_DISMISS_THRESHOLD],
       [MAX_OPACITY, MIN_OPACITY],
-      {
-        extrapolateLeft: 'clamp',
-        extrapolateRight: 'clamp'
-      }
+      { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
+    );
+  });
+  
+  const scale = useDerivedValue(() => {
+    return interpolate(
+      totalTranslateY.value,
+      [0, DRAG_DISMISS_THRESHOLD],
+      [1, 0.95],
+      { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
     );
   });
 
-  const scale = useDerivedValue(() => {
-    return interpolate(
-      translateY.value,
-      [0, DRAG_DISMISS_THRESHOLD],
-      [1, 0.95],
-      {
-        extrapolateLeft: 'clamp',
-        extrapolateRight: 'clamp'
+  // Hàm helper để handle close một cách an toàn
+  const handleClose = () => {
+    try {
+      if (isMountedRef.current) {
+        // Show tab bar trước khi close
+        tabBarContext?.showTabBar?.();
+        // Delay một chút để đảm bảo tab bar được show
+        setTimeout(() => {
+          if (isMountedRef.current) {
+            onClose();
+          }
+        }, 50);
       }
-    );
-  });
+    } catch (error) {
+      console.log('Error in handleClose:', error);
+      // Vẫn gọi onClose nếu có lỗi
+      if (isMountedRef.current) {
+        onClose();
+      }
+    }
+  };
 
   const panGesture = Gesture.Pan()
     .onStart(() => {
@@ -76,28 +109,44 @@ export const DraggableSheet: React.FC<Props> = ({ onClose, children }) => {
       if (e.translationY > 0) {
         const resistance = 0.9;
         translateY.value = e.translationY * resistance;
+      } else {
+        // Reset về 0 nếu kéo lên
+        translateY.value = 0;
       }
     })
     .onEnd((e) => {
       active.value = false;
-      showTabBar()
       
       const shouldClose = 
-        translateY.value > DRAG_DISMISS_THRESHOLD || 
-        (e.velocityY > 750 && translateY.value > SCREEN_HEIGHT * 0.15);
-      
+        totalTranslateY.value > DRAG_DISMISS_THRESHOLD ||
+        (e.velocityY > 750 && totalTranslateY.value > SCREEN_HEIGHT * 0.15);
+    
       if (shouldClose) {
-        translateY.value = withTiming(SCREEN_HEIGHT, { duration: 300 }, () => {
-          runOnJS(onClose)();
+        // Không gọi showTabBar ở đây, để handleClose xử lý
+        translateY.value = withTiming(SCREEN_HEIGHT, { duration: 300 }, (finished) => {
+          if (finished && isMountedRef.current) {
+            runOnJS(handleClose)();
+          }
         });
       } else {
-        translateY.value = withSpring(0, SPRING_CONFIG);
+        // Animation spring back với callback an toàn hơn
+        translateY.value = withSpring(0, SPRING_CONFIG, (finished) => {
+          if (finished && isMountedRef.current && tabBarContext?.showTabBar) {
+            runOnJS(() => {
+              try {
+                tabBarContext.showTabBar();
+              } catch (error) {
+                console.log('Error showing tab bar:', error);
+              }
+            })();
+          }
+        });
       }
     });
 
   const animatedContainerStyle = useAnimatedStyle(() => ({
     transform: [
-      { translateY: translateY.value + translateYOnMount.value },
+      { translateY: totalTranslateY.value },
       { scale: scale.value },
     ],
     opacity: opacity.value,
@@ -110,8 +159,8 @@ export const DraggableSheet: React.FC<Props> = ({ onClose, children }) => {
         [0, DRAG_DISMISS_THRESHOLD],
         [0.5, 0],
         {
-            extrapolateLeft: 'clamp',
-            extrapolateRight: 'clamp'
+          extrapolateLeft: 'clamp',
+          extrapolateRight: 'clamp'
         }
       ),
     };

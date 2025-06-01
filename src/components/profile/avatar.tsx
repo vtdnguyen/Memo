@@ -115,15 +115,13 @@ export default function Avatar({ onPress }: { onPress: () => void }) {
       <View
         style={{
           position: "absolute",
-          top: -7,
-          left: -1,
           width: 3,
-          height: 16,
+          height: 14,
           backgroundColor: colors.black,
           borderRadius: 999,
           transform: [{ rotate: `${rotate}deg` }],
         }}
-      ></View>
+      />
     );
   };
   return (
@@ -144,12 +142,10 @@ export default function Avatar({ onPress }: { onPress: () => void }) {
             {isLoading ? (
               <ActivityIndicator color={colors.black} />
             ) : (
-              <Text
-                style={{ color: "black", fontSize: 30, fontWeight: "bold" }}
-              >
+              <View style={styles.plusWrapper}>
                 {stick(0)}
                 {stick(90)}
-              </Text>
+              </View>
             )}
           </TouchableOpacity>
         </View>
@@ -199,6 +195,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 14,
     marginTop: 50,
+  },
+  plusWrapper: {
+    width: 16,
+    height: 16,
+    position: "relative",
+    alignItems: "center",
+    justifyContent: "center",
   },
   avatarWrapper: {
     borderColor: colors._borderAvatar,

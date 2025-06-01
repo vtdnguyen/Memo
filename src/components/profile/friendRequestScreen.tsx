@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import {
   Animated,
   SafeAreaView,
@@ -25,6 +25,7 @@ import { FriendRequest } from "@/src/types/friend";
 import { User } from "@/src/types/auth";
 import { formatTimeAgo } from "@/src/hooks/helper";
 import { Friend } from "@/src/types/message";
+import {  TabBarContext } from "../../../app/(tabs)/_layout";
 
 interface FriendRequestScreenProps {
   onClose: () => void;
@@ -33,6 +34,8 @@ interface FriendRequestScreenProps {
 export const FriendRequestScreen: React.FC<FriendRequestScreenProps> = ({
   onClose,
 }) => {
+  const { hideTabBar, showTabBar } = useContext(TabBarContext);
+
   const [searchText, setSearchText] = useState("");
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [sentRequests, setSentRequests] = useState<User[]>([]);
@@ -54,6 +57,7 @@ export const FriendRequestScreen: React.FC<FriendRequestScreenProps> = ({
   const [friends, setFriends] = useState<Friend[]>([]);
 
   useEffect(() => {
+    hideTabBar()
     StatusBar.setBarStyle("light-content");
 
     if (!animationsInitialized.current) {
@@ -87,6 +91,7 @@ export const FriendRequestScreen: React.FC<FriendRequestScreenProps> = ({
       startShimmerAnimation();
       animationsInitialized.current = true;
     }
+
   }, []);
 
   useEffect(() => {
@@ -500,7 +505,12 @@ export const FriendRequestScreen: React.FC<FriendRequestScreenProps> = ({
         ]}
       >
         <Header
-          onClose={onClose}
+          onClose={
+            () => {
+              onClose()
+              showTabBar()
+            }
+          }
           receivedRequestsCount={receivedRequests.length}
         />
         <SearchBar
