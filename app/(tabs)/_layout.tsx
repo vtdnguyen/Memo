@@ -27,14 +27,14 @@ export default function TabLayout() {
 
 
   const showTabBar = useCallback(() => {
-    console.log('showTabBarshowTabBarshowTabBarshowTabBar');
+    // console.log('showTabBarshowTabBarshowTabBarshowTabBar');
     
     setTabBarVisible(true);
     setZIndex(1000)
   }, []);
 
   const hideTabBar = useCallback(() => {
-    console.log('hideTabBarhideTabBarhideTabBarhideTabBar');
+    // console.log('hideTabBarhideTabBarhideTabBarhideTabBar');
     
     setTabBarVisible(false);
     setZIndex(0)

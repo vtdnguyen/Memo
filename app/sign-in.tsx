@@ -69,6 +69,10 @@ export default function SignInScreen() {
       if (response.type === "auth/login/fulfilled") {
         console.log("Login thành công");
         setIsLoggedIn(true);
+        setError("");
+        setUserIdentifier("");
+        setPassword("");
+        setButtonActive(false);
       }
     },
     [dispatch]
@@ -118,7 +122,7 @@ export default function SignInScreen() {
           isValid = false;
         }
       } else {
-        const phoneRegex = /^[0-9]{10}$/;
+        const phoneRegex = /^[0-9]{9,10}$/;
         if (!phoneRegex.test(userIdentifier)) {
           setError("Số điện thoại không hợp lệ");
           isValid = false;
@@ -128,7 +132,7 @@ export default function SignInScreen() {
       if (isValid) {
         setError("");
         setCurrentStep("password");
-        setButtonActive(false);
+        setButtonActive(password.length > 0);
       }
     } else if (currentStep === "password") {
       if (password.length < 8) {
@@ -147,10 +151,7 @@ export default function SignInScreen() {
               : "+84" + (userIdentifier[0] === '0' ? userIdentifier.slice(1) : userIdentifier),
           password,
         });
-        setError("");
-        setUserIdentifier("");
-        setPassword("");
-        setButtonActive(false);
+
       }
     }
 
@@ -256,6 +257,8 @@ export default function SignInScreen() {
           setIsConfirmButtonPressed={setIsConfirmButtonPressed}
           buttonActive={buttonActive}
         />
+
+
       </View>
 
       {isVisiblePopup && (

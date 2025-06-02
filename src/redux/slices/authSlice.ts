@@ -171,7 +171,7 @@ const authSlice = createSlice({
       })
       .addCase(completeOnboarding.fulfilled, (state, action) => {
         state.loading = false;
-        state.isFirstTimeUser = false;
+        // state.isFirstTimeUser = false;
       })
       .addCase(completeOnboarding.rejected, (state, action) => {
         state.loading = false;

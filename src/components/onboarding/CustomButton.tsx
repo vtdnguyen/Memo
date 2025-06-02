@@ -111,7 +111,7 @@ const CustomButton = ({ flatListRef, flatListIndex, dataLength, x }: Props) => {
         if (response.type === "auth/completeOnboarding/fulfilled") {
           // router.push(`/sign-in`);
           // Alert.alert("completeOnboarding", 'completeOnboarding')
-          return router.replace(`/sign-in`);
+          return router.push(`/sign-in`);
         } else {
           console.error("Error completing onboarding:", response);
         }

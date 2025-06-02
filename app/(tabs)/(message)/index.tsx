@@ -9,6 +9,7 @@ import {
   Image,
   Keyboard,
   Dimensions,
+  ActivityIndicator,
 } from "react-native";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { router, usePathname } from "expo-router";
@@ -60,7 +61,7 @@ export default function MessageScreen() {
   const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
   const pathname = usePathname();
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   useEffect(() => {
     const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
       setTabBarVisible(false);
@@ -85,9 +86,9 @@ export default function MessageScreen() {
   useEffect(() => {
     try {
     const fetchFriends = async () => {
-      setLoading(true)
+      // setLoading(true)
       const page = 1;
-      const limit = 10;
+      const limit = 20;
       const keyword = "";
       const response = await axios.get(
         `${API_URL}/friend?page=${page}&limit=${limit}&keyword=${keyword}`,
@@ -98,19 +99,14 @@ export default function MessageScreen() {
           withCredentials: true,
         }
       );
-      for (const friend of response.data.data) {
-        console.log("friend", friend);
-
-        setFriends((prev) => [
-          ...prev,
-          {
-            id: friend.friend.id,
-            name: friend.friend.username,
-            avatar: friend.friend.avatar.url,
-            unreadCount: 0, // TODO: chỉnh database lưu chưa đọc
-          },
-        ]);
-      }
+      const newFriends = response.data.data.map((friend: any) => ({
+        id: friend.friend.id,
+        name: friend.friend.username,
+        avatar: friend.friend.avatar.url,
+        unreadCount: 0, // TODO: chỉnh database lưu chưa đọc
+      }));
+      
+      setFriends((prev) => [...prev, ...newFriends]);
     };
     fetchFriends();
   } catch (e) {
@@ -131,7 +127,7 @@ export default function MessageScreen() {
   };
 
   const handleBack = () => {
-    showTabBar();
+    // showTabBar();
     router.back();
   };
 
@@ -178,10 +174,16 @@ export default function MessageScreen() {
 
   useEffect(() => {
     hideTabBar();
-    return () => {
-      showTabBar();
-    };
-  }, [hideTabBar, showTabBar]);
+    // return () => {
+    //   showTabBar();
+    // };
+  }, [hideTabBar,]);
+
+  if (loading) {
+    return <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <ActivityIndicator size="large" color={colors.primary} />
+    </View>
+  }
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -197,23 +199,26 @@ export default function MessageScreen() {
 
       { friends.length > 0 ?
 
-      <FlatList
-        data={friends}
-        renderItem={renderFriendItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-      /> :  <View
-              style={{
-                position: 'absolute',
-                top: screenHeight / 2,
-                left: 0,
-                right: 0,
-                alignItems: 'center',
-              }}
-            >
-              <Text style={{ color: 'white' }}>Tìm thêm bạn mới đi</Text>
-            </View>}
+        <FlatList
+          data={friends}
+          renderItem={renderFriendItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+        /> : ( !loading && 
+        <View
+          style={{
+            position: 'absolute',
+            top: screenHeight / 2,
+            left: 0,
+            right: 0,
+            alignItems: 'center',
+          }}
+        >
+          <Text style={{ color: 'white' }}>Tìm thêm bạn mới đi</Text>
+        </View>
+        )
+      }
     </View>
   );
 }

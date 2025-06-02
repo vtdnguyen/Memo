@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+
 import {
   StyleSheet,
   View,
@@ -19,12 +21,13 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import { MaterialIcons, Ionicons, Feather } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
-import { FlipType, SaveFormat, useImageManipulator, manipulateAsync } from "expo-image-manipulator";
+import { FlipType, SaveFormat, useImageManipulator } from "expo-image-manipulator";
 import { colors } from "@/constants/Colors";
 import ExpandTab from "@/src/components/home/expand";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useImageContext } from "@/src/contexts/ImageContext";
 import { router } from "expo-router";
+
 // import { ArrowRight, FlipHorizontal, RotateCw, X } from "lucide-react-native";
 
 export default function PhotoScreen() {
@@ -32,6 +35,7 @@ export default function PhotoScreen() {
   const [type, setType] = useState<CameraType>("back");
   const [flashMode, setFlashMode] = useState<FlashMode>("off");
   const [zoom, setZoom] = useState(0);
+  const [isCameraActive, setIsCameraActive] = useState(true);
 
   // All useRef hooks
   const cameraRef = useRef<CameraView>(null);
@@ -43,38 +47,6 @@ export default function PhotoScreen() {
   const context = useImageManipulator(capturedImage || "");
 
   const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
-
-
-  useEffect(() => {
-    (async () => {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      if (status !== "granted") {
-        return Alert.alert("Permission required", "Camera access is needed");
-      }
-      const imgPerm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (imgPerm.status !== "granted") {
-        return Alert.alert("Permission required", "Gallery access is needed");
-      }
-    })();
-  }, []);
-
-  if (!permission)
-    return (
-      <View style={styles.container}>
-        <Text>Requesting permissions…</Text>
-      </View>
-    );
-  if (!permission.granted) {
-    return (
-      <View style={styles.container}>
-        <Text>We need your permission to use the camera</Text>
-        <TouchableOpacity style={styles.button} onPress={requestPermission}>
-          <Text style={styles.buttonText}>Grant Permission</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
 
   const flipImage = async () => {
     context.flip(FlipType.Horizontal);
@@ -88,7 +60,6 @@ export default function PhotoScreen() {
 
   const cropImage = async () => {
     console.log('crop image');
-    
     
     try {
       context.crop({
@@ -164,7 +135,6 @@ export default function PhotoScreen() {
     }
   };
 
-  // Other functions
   const toggleCameraType = () => {
     setType((current) => (current === "back" ? "front" : "back"));
   };
@@ -192,100 +162,153 @@ export default function PhotoScreen() {
     if (zoom === 0.5) return "zoom-out";
   };
 
-  return (
-    <View
-      style={[
-        styles.container,
-        { paddingTop: insets.top, paddingBottom: insets.bottom },
-      ]}
-    >
-      <StatusBar style="light" />
+  const onCameraReady = () => {
+    console.log("Camera is ready and active");
+  };
 
-      <View style={styles.topRow}>
-        <Image
-          source={require("@/assets/logo/MEMO_light.png")}
-          style={{ width: 50, height: 50 }}
-        />
-        <View style={styles.cameraControlsContainer}>
-          <TouchableOpacity
-            style={[styles.flashButton, { paddingRight: 20 }]}
-            onPress={toggleZoom}
-          >
-            <MaterialIcons name={getZoomIcon()} size={36} color="white" />
+  useFocusEffect(
+    useCallback(() => {
+      console.log("PhotoScreen focused - activating camera");
+      setCapturedImage(null);
+      setIsCameraActive(true);
+  
+      return () => {
+        console.log("PhotoScreen unfocused - deactivating camera");
+        setIsCameraActive(false);
+      };
+    }, [setCapturedImage])
+  );
+
+  useEffect(() => {
+
+    (async () => {
+      const { status } = await Camera.requestCameraPermissionsAsync();
+      if (status !== "granted") {
+        return Alert.alert("Yêu cầu cho phép", "Ứng dụng cần truy cập máy ảnh");
+      }
+      const imgPerm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (imgPerm.status !== "granted") {
+        return Alert.alert("Yêu cầu cho phép", "Ứng dụng cần truy cập thư viện");
+      }
+    })();
+  }, []);
+
+  if (!permission)
+    return (
+      <View style={styles.container}>
+        <Text>Yêu cầu quyền truy cập…</Text>
+      </View>
+    );
+
+  if (!permission.granted) {
+    return (
+      <View style={styles.container}>
+        {/* <Text>We need your permission to use the camera</Text> */}
+        <TouchableOpacity style={styles.button} onPress={requestPermission}>
+          <Text style={styles.buttonText}>Lấy hình ảnh</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  } else {
+    return (
+      <View
+        style={[
+          styles.container,
+          { paddingTop: insets.top, paddingBottom: insets.bottom },
+        ]}
+      >
+        <StatusBar style="light" />
+
+        <View style={styles.topRow}>
+          <Image
+            source={require("@/assets/logo/MEMO_light.png")}
+            style={{ width: 50, height: 50 }}
+          />
+          <View style={styles.cameraControlsContainer}>
+            <TouchableOpacity
+              style={[styles.flashButton, { paddingRight: 20 }]}
+              onPress={toggleZoom}
+            >
+              <MaterialIcons name={getZoomIcon()} size={36} color="white" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.flashButton} onPress={toggleFlash}>
+              <MaterialIcons name={getFlashIcon()} size={36} color="white" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.previewContainer}>
+          
+          { isCameraActive && 
+            <CameraView
+              // key={capturedImage ? "image" : "camera"}
+              ref={cameraRef}
+              style={styles.camera}
+              facing={type}
+              flash={flashMode}
+              zoom={zoom}
+              mirror={true}
+              mute={true}
+              // onCameraReady={onCameraReady}
+            />
+          }
+          {capturedImage && (
+            <Image
+              source={{ uri: capturedImage }}
+              style={{ width: "100%", height: "100%" }}
+            />
+          )}
+        </View>
+
+        <TouchableOpacity>
+          <ExpandTab />
+        </TouchableOpacity>
+
+        <View style={styles.controlsRow}>
+          <TouchableOpacity style={styles.controlButton} onPress={pickImage}>
+            <Ionicons name="images-outline" size={40} color="#F5F5F5" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.flashButton} onPress={toggleFlash}>
-            <MaterialIcons name={getFlashIcon()} size={36} color="white" />
+
+          <TouchableOpacity style={styles.captureButton} onPress={takePicture}>
+            <View style={styles.captureInner} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.controlButton}
+            onPress={toggleCameraType}
+          >
+            <Feather name="rotate-cw" size={40} color="#F5F5F5" />
           </TouchableOpacity>
         </View>
-      </View>
-
-      <View style={styles.previewContainer}>
-        
-        <CameraView
-          ref={cameraRef}
-          style={styles.camera}
-          facing={type}
-          flash={flashMode}
-          zoom={zoom}
-          mirror={true}
-          mute={true}
-        />
         {capturedImage && (
-          <Image
-            source={{ uri: capturedImage }}
-            style={{ width: "100%", height: "100%" }}
-          />
+          <View
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              flexDirection: "row",
+              gap: 20,
+              marginTop: 20,
+              width: "100%",
+              zIndex: 1000,
+            }}
+          >
+            <TouchableOpacity style={styles.funcButton} onPress={() => setCapturedImage(null)}>
+              <Feather name='x' size={30} color="white" />
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => flipImage()} style={styles.funcButton}>
+              <Feather name="refresh-cw" size={30} color="white" />
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={navigateToConfig} style={styles.funcButton}>
+              <Feather name="arrow-right" size={50} color="white" />
+            </TouchableOpacity>
+          </View>
         )}
       </View>
-
-      <TouchableOpacity>
-        <ExpandTab />
-      </TouchableOpacity>
-
-      <View style={styles.controlsRow}>
-        <TouchableOpacity style={styles.controlButton} onPress={pickImage}>
-          <Ionicons name="images-outline" size={40} color="#F5F5F5" />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.captureButton} onPress={takePicture}>
-          <View style={styles.captureInner} />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.controlButton}
-          onPress={toggleCameraType}
-        >
-          <Feather name="rotate-cw" size={40} color="#F5F5F5" />
-        </TouchableOpacity>
-      </View>
-      {capturedImage && (
-        <View
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            flexDirection: "row",
-            gap: 20,
-            marginTop: 20,
-            width: "100%",
-            zIndex: 1000,
-          }}
-        >
-          <TouchableOpacity style={styles.funcButton} onPress={() => setCapturedImage(null)}>
-            <Feather name='x' size={30} color="white" />
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => flipImage()} style={styles.funcButton}>
-            <Feather name="refresh-cw" size={30} color="white" />
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={navigateToConfig} style={styles.funcButton}>
-            <Feather name="arrow-right" size={50} color="white" />
-          </TouchableOpacity>
-        </View>
-      )}
-    </View>
-  );
+    );
+  }
 }
 
 export const styles = StyleSheet.create({

@@ -110,7 +110,7 @@ export default function SignUpScreen() {
         if (isValid) {
           setError("");
           setCurrentStep("name");
-          setButtonActive(!!(firstName && lastName));
+          setButtonActive(!!(firstName && lastName && username));
         }
       } else if (currentStep === "name") {
         if (!firstName.trim() || !lastName.trim()) {

@@ -17,6 +17,7 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  Keyboard,
   // ActivityIndicator,
   // ToastAndroid,
 } from "react-native";
@@ -106,6 +107,18 @@ export default function ExploreScreen(): React.JSX.Element {
   const socketMessage = useSocketMessage();
   // Calculate the square image size (70% of screen width, maintaining 1:1 ratio)
   const imageSize = screenWidth * 1;
+
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardDidShow', () => setKeyboardOpen(true));
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => setKeyboardOpen(false));
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   const onViewableItemsChanged = ({ viewableItems }: ViewableItemsChanged) => {
     if (viewableItems.length > 0) {
@@ -447,10 +460,10 @@ export default function ExploreScreen(): React.JSX.Element {
       { (POSTS.length > 0 && POSTS[currentIndex].user.id !== user?.id) && <View
         style={[
           styles.messageInputContainer,
-          { paddingBottom: insets.bottom + 70 },
+          keyboardOpen ? { bottom: Dimensions.get("window").height / 2  } : null
         ]}
       >
-        <TouchableOpacity style={styles.messageInputButton} activeOpacity={1}>
+        <TouchableOpacity style={styles.messageInputButton} activeOpacity={1} onPress={() => { hideTabBar(); }}>
           <TextInput
             style={styles.messageInputPlaceholder}
             placeholder="Nói gì đi..."
@@ -631,9 +644,7 @@ const styles = StyleSheet.create({
   },
   messageInputContainer: {
     position: "absolute",
-    bottom: 50,
-    left: 0,
-    right: 0,
+    bottom: 120,
     width: "100%",
     padding: 16,
   },

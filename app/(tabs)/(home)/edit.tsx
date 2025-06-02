@@ -43,7 +43,7 @@ export default function Edit() {
   const insets = useSafeAreaInsets();
 
   if (!capturedImage) {
-    router.replace("/(tabs)/(home)/");
+    router.push("/(tabs)/(home)/");
     return null;
   }
   // Show Status tab bar
@@ -54,7 +54,6 @@ export default function Edit() {
   };
   const closeStatustab = (status: Status | null) => {
     setTempStatus(status);
-
     setStatusTabVisible(false);
     showTabBar();
   };

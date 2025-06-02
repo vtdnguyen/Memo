@@ -508,7 +508,7 @@ export default function ConfigScreen(): React.ReactNode {
       ToastAndroid.show("Đã gửi thành công!", ToastAndroid.SHORT);
       
       setTimeout(() => {
-        router.replace("/(tabs)");
+        router.push("/(tabs)");
       }, 1000);
   
     } catch (error: any) {
