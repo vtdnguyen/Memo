@@ -38,7 +38,7 @@ export const useMessage = (receiverId: string) => {
   }, [socketMessage]);
 
   const sendMessage = useCallback(
-    (content: string) => {
+    (content: string, fileUri?: string) => {
       if (!socketMessage || !currentUser || !isConnected) {
         console.error(
           "Cannot send message: Socket not connected or user not logged in"

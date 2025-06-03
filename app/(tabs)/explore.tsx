@@ -379,8 +379,14 @@ export default function ExploreScreen(): React.JSX.Element {
     socketMessage?.emit("send-message", {
       receiverId: currentPost.user.id,
       content: messageText.trim(),
-      fileUri: currentPost.imageUrl,
+      // fileUri: currentPost.imageUrl,
     });
+    socketMessage?.emit("send-message", {
+      receiverId: currentPost.user.id,
+      content: currentPost.imageUrl,
+      // fileUri: currentPost.imageUrl,
+    });
+
     // setMessages((prev: Message[]) => [...prev, newMessage]);
 
     setMessageText("");

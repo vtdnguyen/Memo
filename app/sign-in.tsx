@@ -257,8 +257,6 @@ export default function SignInScreen() {
           setIsConfirmButtonPressed={setIsConfirmButtonPressed}
           buttonActive={buttonActive}
         />
-
-
       </View>
 
       {isVisiblePopup && (

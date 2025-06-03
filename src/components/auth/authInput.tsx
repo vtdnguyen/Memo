@@ -6,7 +6,6 @@ import {
   View,
   Image,
   TouchableOpacity,Text,
-  Keyboard
 } from "react-native";
 import Svg, { Path } from "react-native-svg";
 
@@ -56,7 +55,13 @@ export default function AuthInput({
 
 
   // console.log('type: ', type, type === "phone");
+
+  console.log('capatilize: ', type === "name" ? "words" : "none");
   
+  
+  const isSecure = type === "password" && !showPassword;
+  console.log('isSecure', isSecure);
+
 
   return (
     <View style={styles.wrapper}>
@@ -115,7 +120,7 @@ export default function AuthInput({
           value={inputValue}
           onChangeText={handleChange}
           autoCapitalize={type === "name" ? "words" : "none"}
-          secureTextEntry={type === "password" && !showPassword}
+          secureTextEntry={isSecure}
           keyboardType={
             type === "email"
               ? "email-address"
@@ -123,6 +128,7 @@ export default function AuthInput({
               ? "phone-pad"
               : "default"
           }
+          autoCorrect={false}
           returnKeyType={nextRef !== undefined
             ? "next"
             : "default"}

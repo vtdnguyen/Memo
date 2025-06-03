@@ -56,7 +56,7 @@ import { API_URL } from "@/src/redux/slices/authSlice";
 
 export default function MessageScreen() {
   const insets = useSafeAreaInsets();
-  const { setTabBarVisible, isVisible } =
+  const { setTabBarVisible, isVisible, showTabBar } =
     useContext(TabBarContext);
   const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
@@ -127,7 +127,7 @@ export default function MessageScreen() {
   };
 
   const handleBack = () => {
-    // showTabBar();
+    showTabBar();
     router.back();
   };
 
@@ -162,10 +162,10 @@ export default function MessageScreen() {
     </TouchableOpacity>
   );
 
-  const showTabBar = useCallback(() => {
-    console.log("showTabBar called");
-    setTabBarVisible(true);
-  }, [setTabBarVisible]);
+  // const showTabBar = useCallback(() => {
+  //   console.log("showTabBar called");
+  //   setTabBarVisible(true);
+  // }, [setTabBarVisible]);
 
   const hideTabBar = useCallback(() => {
     console.log("hideTabBar called");

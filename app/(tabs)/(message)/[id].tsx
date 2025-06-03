@@ -134,6 +134,12 @@ export default function ChatScreen() {
     setMessageText((prev) => prev + emoji);
   };
 
+  const isImageUrl = (url: string) => {
+    return (
+      /\.(jpg|jpeg|png|gif|webp)$/i.test(url) || url.startsWith("data:image")
+    );
+  };
+
   const renderMessage = ({ item }: { item: Message }) => {
     const isOwnMessage = item.sender.id === currentUser?.id;
     const showAvatar = !isOwnMessage;
@@ -160,13 +166,15 @@ export default function ChatScreen() {
           {!isOwnMessage && (
             <Text style={styles.senderName}>{item.sender.username}</Text>
           )}
-          { item.fileUri &&
-            <Image 
-              source={{ uri: item.fileUri }} 
-              style={{ width: 200, height: 200 }} 
+          {isImageUrl(item.content) ? (
+            <Image
+              source={{ uri: item.content }}
+              style={{ width: 200, height: 200, borderRadius: 8 }}
+              resizeMode="cover"
             />
-           }
-          <Text style={styles.messageContent}>{item.content}</Text>
+          ) : (
+            <Text style={styles.messageContent}>{item.content}</Text>
+          )}
           <Text style={styles.messageTime}>
             {formatTimeAgo(item.createdAt)}
           </Text>
